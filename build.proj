@@ -37,6 +37,8 @@
       <DestDir>%(RecursiveDir)</DestDir>
     </ContentItems>
 
+    <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
+
     <ProjectsToBuild Include="$(SourceRoot)TemplatePack.sln" />
   </ItemGroup>
 
@@ -98,6 +100,9 @@
     <Copy SourceFiles="@(LibItems)"
           DestinationFiles="@(LibItems->'$(PackageRoot)lib\%(DestDir)%(Filename)%(Extension)')"/>
     
+    <Copy SourceFiles="@(NuGetRootItems)"
+          DestinationFiles="@(NuGetRootItems->'$(PackageRoot)%(DestDir)%(Filename)%(Extension)')" />
+
   </Target>
 
   <Target Name="CleanAndInitalize">
