@@ -4,5 +4,5 @@ from the contents of the ItemTemplates\ folder. A demo template has been install
 You should add the following XML element in your .vsixmanifest file.
 
   <Assets>
-    <Asset Type="Microsoft.VisualStudio.ItemTemplate" Path="Output\ItemTemplates" xdt:Transform="Remove" xdt:Locator="Match(Path)" />
+    <Asset Type="Microsoft.VisualStudio.ItemTemplate" Path="Output\ItemTemplates"/>
   </Assets>
