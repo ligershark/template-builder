@@ -18,21 +18,42 @@
     <!-- This is where all the Item Template .zip files will be located -->
     <ls-ItemTemplateZipRootFolder Condition=" '$(ls-ItemTemplateZipRootFolder)'=='' ">Output\ItemTemplates\</ls-ItemTemplateZipRootFolder>
     <ls-TemplateSubFolder Condition=" '$(ls-TemplateSubFolder)'=='' ">Custom Templates</ls-TemplateSubFolder>
-</PropertyGroup>
+    
+    <ls-MSBuildLibPathLocal Condition=" '$(ls-MSBuildLibPathLocal)'=='' ">$(LocalAppData)\Microsoft\MSBuild\TemplateBuilder\v1.0.0.0\</ls-MSBuildLibPathLocal>
+    <ls-MSBuildLibPath Condition=" '$(ls-MSBuildLibPath)'=='' ">$(MSBuildThisFileDirectory)</ls-MSBuildLibPath>
+  </PropertyGroup>
 
   <PropertyGroup>
     <ls-UseHardLinksForItemTemplatesCopy Condition=" '$(ls-UseHardLinksForItemTemplatesCopy)'=='' ">false</ls-UseHardLinksForItemTemplatesCopy>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ls-BuildAssemblies Include="$(ls-MSBuildLibPath)*.dll"/>
+  </ItemGroup>
+  <Target Name="CopyMSBuildFilesToLocalAppData"
+          Inputs="@(ls-BuildAssemblies)"
+          Outputs="@(ls-BuildAssemblies->'$(ls-MSBuildLibPathLocal)%(FileName)%(Extension)')">
+    
+    <MakeDir Directories="$(ls-MSBuildLibPathLocal)"/>
+    <Copy SourceFiles="@(ls-BuildAssemblies)"
+          DestinationFiles="@(ls-BuildAssemblies->'$(ls-MSBuildLibPathLocal)%(FileName)%(Extension)')"
+          Condition="!Exists('$(ls-MSBuildLibPathLocal)%(ls-BuildAssemblies.FileName)%(ls-BuildAssemblies.Extension)')"
+          />
+    
+  </Target>
+
+  <UsingTask AssemblyFile="$(ls-MSBuildLibPathLocal)MSBuild.ExtensionPack.dll" TaskName="MSBuild.ExtensionPack.Compression.Zip" />
+  
   <!-- This hooks up the ItemTemplate targets to the Build Process -->
   <PropertyGroup>
     <CoreCompileDependsOn Condition=" '$(ls-ItemTemplatesExtendBuild)'=='true' ">
+      CopyMSBuildFilesToLocalAppData;
       $(CoreCompileDependsOn);
       ls-ProcessItemTemplates;
     </CoreCompileDependsOn>
   </PropertyGroup>
    
-  <UsingTask AssemblyFile="$(ls-BuildLib)MSBuild.ExtensionPack.dll" TaskName="MSBuild.ExtensionPack.Compression.Zip" />
+  <!--<UsingTask AssemblyFile="$(ls-BuildLib)MSBuild.ExtensionPack.dll" TaskName="MSBuild.ExtensionPack.Compression.Zip" />-->
 
   <PropertyGroup>
     <ls-ProcessItemTemplatesDependsOn>
