@@ -26,11 +26,28 @@ function RemoveExistingKnownPropertyGroups($projectRootElement){
 }
 
 # TODO: Revisit this later, it was causing some exceptions
-function CheckoutProjFileIfUnderScc(){
+function CheckoutProjFileIfUnderScc(){    
+    # $sourceControl = Get-Interface $project.DTE.SourceControl ([EnvDTE80.SourceControl2])
+    # if($sourceControl.IsItemUnderSCC($project.FullName) -and $sourceControl.IsItemCheckedOut($project.FullName)){
+    #    $sourceControl.CheckOutItem($project.FullName)
+    #}
+    CheckoutIfUnderScc -filePath $project.FullName
+}
+
+function CheckoutIfUnderScc(){
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]
+        $filePath,
+
+        $project = (Get-Project)
+    )
+    "`tChecking if file is under source control, [{0}]" -f $filePath| Write-Verbose
     # http://daltskin.blogspot.com/2012/05/nuget-powershell-and-tfs.html
     $sourceControl = Get-Interface $project.DTE.SourceControl ([EnvDTE80.SourceControl2])
-    if($sourceControl.IsItemUnderSCC($project.FullName) -and $sourceControl.IsItemCheckedOut($project.FullName)){
-        $sourceControl.CheckOutItem($project.FullName)
+    if($sourceControl.IsItemUnderSCC($filePath) -and $sourceControl.IsItemCheckedOut($filePath)){
+        "`tChecking out file [{0}]" -f $filePath | Write-Host
+        $sourceControl.CheckOutItem($filePath)
     }
 }
 
@@ -114,6 +131,56 @@ function AddImportElementIfNotExists(){
     }        
 }
 
+function UpdateVsixManifest(){
+    param(
+        $project = (Get-Project)
+    )
+    # we will look for any file in the project which ends with .vsixmanifest and add
+    # <Assets>
+    #   <Asset Type="Microsoft.VisualStudio.ItemTemplate" Path="Output\ItemTemplates"/>
+    # </Assets>
+
+    $vsixManifestFiles = @()
+    # search for any file in the project which ends with .vsixmanifest
+    foreach ($projItem in $project.ProjectItems){ 
+        if( ($projItem -and $projItem.Name -and $projItem.Name.EndsWith('.vsixmanifest'))) {
+            "`tFound manifest [{0}], getting fullpath" -f $projItem.Name | Write-Verbose
+            $vsixManifestFiles += $projItem.Properties.Item("FullPath").Value
+        }
+    }
+
+    foreach($vsixManifestFile in $vsixManifestFiles){
+        AddAssetTagToVisxManfiestIfNotExists -vsixFilePathToUpdate $vsixManifestFile
+    }
+}
+
+function AddAssetTagToVisxManfiestIfNotExists(){
+    param(
+        [Parameter(Mandatory=$true)]
+        $vsixFilePathToUpdate
+    )
+    
+    if(!(Test-Path $vsixFilePathToUpdate)){
+        ".vsixmanifest file not found at [{0}]" -f $vsixFilePathToUpdate | Write-Error
+        return;
+    }
+    
+    [xml]$vsixXml = (Get-Content $vsixFilePathToUpdate)
+    if( ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ItemTemplates'}) ){
+        # if the asset is already there just skip it
+        "`t.vsixmanifest not modified because the 'Output\ItemTemplates' element is already in that file" | Write-Host
+    }
+    else{
+        "`tAdding asset tag to .vsixmanifest file {0}" -f $vsixFilePathToUpdate | Write-Host
+        CheckoutIfUnderScc -filePath $vsixFilePathToUpdate
+        # create the element here
+        $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
+        $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ItemTemplate')
+        $newElement.SetAttribute('Path', 'Output\ItemTemplates')
+        $vsixXml.PackageManifest.Assets.AppendChild($newElement)
+        $vsixXml.Save($vsixFilePathToUpdate)
+    }
+}
 
 #########################
 # Start of script here
@@ -154,6 +221,8 @@ $propNuGetImportPath.Condition = ' ''$(TemplateBuilderTargets)''=='''' ';
 AddImportElementIfNotExists -projectRootElement $projectMSBuild
 
 $projectMSBuild.Save()
+
+UpdateVsixManifest -project $project
 
 "    TemplateBuilder has been installed into project [{0}]" -f $project.FullName| Write-Host -ForegroundColor DarkGreen
 "    `nFor more info how to enable TemplateBuilder on build servers see http://sedodream.com/2013/06/06/HowToSimplifyShippingBuildUpdatesInANuGetPackage.aspx" | Write-Host -ForegroundColor DarkGreen
