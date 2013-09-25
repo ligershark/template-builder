@@ -51,9 +51,7 @@
       $(CoreCompileDependsOn);
       ls-ProcessItemTemplates;
     </CoreCompileDependsOn>
-  </PropertyGroup>
-   
-  <!--<UsingTask AssemblyFile="$(ls-BuildLib)MSBuild.ExtensionPack.dll" TaskName="MSBuild.ExtensionPack.Compression.Zip" />-->
+  </PropertyGroup>  
 
   <PropertyGroup>
     <ls-ProcessItemTemplatesDependsOn>
@@ -63,9 +61,6 @@
     </ls-ProcessItemTemplatesDependsOn>
   </PropertyGroup>
   <Target Name="ls-ProcessItemTemplates" DependsOnTargets="$(ls-ProcessItemTemplatesDependsOn)" />
-  
-  
-  
   
   <Target Name="ls-DiscoverItemTemplateFiles">
     <!-- Look through Item Templates folder for all .vstemplate files in the project (as Content) -->
@@ -227,10 +222,8 @@
 
     </ItemGroup>
 
-    <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" Importance="high"/>
-    
-  </Target>
-  
+    <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" Importance="high"/>    
+  </Target>  
   
   <!-- Tasks defined below -->
   <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
@@ -257,13 +250,17 @@
       <Code Type="Fragment" Language="cs">
         <!-- TODO: Make the folder name 'SideWaffle' into a parameter -->
         <![CDATA[
+                Log.LogMessage("GetItemTemplateNameFromVSTemplatePath Starting");
                 System.IO.FileInfo fi = new System.IO.FileInfo(VstemplateFilePath);
                 System.IO.DirectoryInfo di = fi.Directory;
-                
-                ItemTemplateFolder = di.Parent.FullName + @"\";
-        
-                if(ItemTemplateZipRootFolder == null){
-                  ItemTemplateZipRootFolder = string.Empty;
+
+                var ItemTemplateFolderInfo = new System.IO.FileInfo(di.Parent.FullName);
+                ItemTemplateFolder = ItemTemplateFolderInfo.FullName + @"\";
+
+                var templateRelPath = di.Parent.Parent.Name;
+
+                if (ItemTemplateZipRootFolder == null) {
+                    ItemTemplateZipRootFolder = string.Empty;
                 }
 
                 string itRootFileName = di.Parent.Name;
@@ -273,35 +270,38 @@
                   "{0}{1}.zip",
                   ItemTemplateName,
                   fi.Name);
-                  
-                  // set OutputFolder
-                  // if the name is 
-                  //  'CSharp.vstemplate' -> CSharp\
-                  //  'Web.CSharp.vstemplate' -> CSharp\Web\
-                  //  'VB.vstemplate' -> VisualBasic\
-                  //  'Web.VB.vstemplate' -> VisualBasic\Web\
-                  if(string.Compare(@"CSharp.vstemplate", fi.Name,StringComparison.OrdinalIgnoreCase)==0){
-                    ItemTemplateName = string.Format("{0}.csharp",itRootFileName);
+                // set OutputFolder
+                // if the name is 
+                //  'CSharp.vstemplate' -> CSharp\
+                //  'Web.CSharp.vstemplate' -> CSharp\Web\
+                //  'VB.vstemplate' -> VisualBasic\
+                //  'Web.VB.vstemplate' -> VisualBasic\Web\
+                if (string.Compare(@"CSharp.vstemplate", fi.Name, StringComparison.OrdinalIgnoreCase) == 0) {
+                    ItemTemplateName = string.Format("{0}.csharp", itRootFileName);
+                    OutputPathFolder = string.Format(@"{0}CSharp\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);
+                }
+                else if (string.Compare(@"Web.CSharp.vstemplate", fi.Name, StringComparison.OrdinalIgnoreCase) == 0) {
+                    ItemTemplateName = string.Format("{0}.web.csharp", itRootFileName);
+
+                    // web site templates do not support any nesting
                     OutputPathFolder = string.Format(@"{0}CSharp\Web\{1}", ItemTemplateZipRootFolder, subFolder);
-                  }
-                  else if(string.Compare(@"Web.CSharp.vstemplate", fi.Name,StringComparison.OrdinalIgnoreCase)==0){
-                    ItemTemplateName = string.Format("{0}.web.csharp",itRootFileName);
-                    OutputPathFolder = string.Format(@"{0}CSharp\Web\{1}", ItemTemplateZipRootFolder, subFolder);
-                  }
-                  else if(string.Compare(@"VB.vstemplate", fi.Name,StringComparison.OrdinalIgnoreCase)==0){
-                    ItemTemplateName = string.Format("{0}.VB",itRootFileName);
+                }
+                else if (string.Compare(@"VB.vstemplate", fi.Name, StringComparison.OrdinalIgnoreCase) == 0) {
+                    ItemTemplateName = string.Format("{0}.VB", itRootFileName);
+                    OutputPathFolder = string.Format(@"{0}VisualBasic\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);
+                }
+                else if (string.Compare(@"Web.VB.vstemplate", fi.Name, StringComparison.OrdinalIgnoreCase) == 0) {
+                    ItemTemplateName = string.Format("{0}.web.VB", itRootFileName);
+
+                    // web site templates do not support any nesting
                     OutputPathFolder = string.Format(@"{0}VisualBasic\Web\{1}", ItemTemplateZipRootFolder, subFolder);
-                  }
-                  else if(string.Compare(@"Web.VB.vstemplate", fi.Name,StringComparison.OrdinalIgnoreCase)==0){
-                    ItemTemplateName = string.Format("{0}.web.VB",itRootFileName);
-                    OutputPathFolder = string.Format(@"{0}VisualBasic\Web\{1}", ItemTemplateZipRootFolder, subFolder);
-                  }
-                  else{
-                    Log.LogError("Unknown value for ItemTemplateName: [{0}]. Supported values include 'CSharp.vstemplate','Web.CSharp.vstemplate','VB.vstemplate' and 'Web.VB.vstemplate' ",fi.Name);
+                }
+                else {
+                    Log.LogError("Unknown value for ItemTemplateName: [{0}]. Supported values include 'CSharp.vstemplate','Web.CSharp.vstemplate','VB.vstemplate' and 'Web.VB.vstemplate' ", fi.Name);
                     return false;
-                  }
-                  
-                  OutputPathWithFileName = string.Format(@"{0}{1}", OutputPathFolder, itRootFileName);
+                }
+
+                OutputPathWithFileName = string.Format(@"{0}{1}", OutputPathFolder, itRootFileName);   
             ]]>
       </Code>
     </Task>

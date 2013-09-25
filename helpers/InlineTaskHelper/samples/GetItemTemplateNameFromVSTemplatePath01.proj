@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Demo" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\InlineTaskHelper.dll</TasksAssemblyPath>
+  </PropertyGroup>
+  
+  <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath"
+             AssemblyFile="$(TasksAssemblyPath)"/>
+
+  <PropertyGroup>
+    <VstemplateFilePath Condition=" '$(VstemplateFilePath)'=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\Misc\ReadmeMd\Definitions\CSharp.vstemplate</VstemplateFilePath>
+    <ItemTemplateRoot Condition=" ''=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\</ItemTemplateRoot>
+    <ItemTemplateZipRootFolder Condition=" '$(ItemTemplateZipRootFolder)'=='' ">Output\ItemTemplates\</ItemTemplateZipRootFolder>
+    <CustomTemplatesFolder Condition=" '$(CustomTemplatesFolder)'=='' ">GetItemTemplateNameFromVSTemplatePath-Custom Templates</CustomTemplatesFolder>
+  </PropertyGroup>
+  
+  <Target Name="Demo">
+    <Message Text="Calling GetItemTemplateNameFromVSTemplatePath" Importance="high"/>
+    
+    <GetItemTemplateNameFromVSTemplatePath
+      VstemplateFilePath="$(VstemplateFilePath)"
+      ItemTemplateRoot="$(ItemTemplateRoot)"
+      ItemTemplateZipRootFolder="$(ItemTemplateZipRootFolder)"
+      CustomTemplatesFolder="$(CustomTemplatesFolder)">
+      <Output TaskParameter="ItemTemplateName" PropertyName="ItemTemplateName" />
+      <Output TaskParameter="ItemTemplateFolder" PropertyName="ItemTemplateFolder" />
+      <Output TaskParameter="OutputPathWithFileName" PropertyName="OutputPathWithFileName" />
+      <Output TaskParameter="OutputPathFolder" PropertyName="OutputPathFolder"/>
+    </GetItemTemplateNameFromVSTemplatePath>
+
+    <Message Text="
+     VstemplateFilePath: [$(VstemplateFilePath)]
+     ItemTemplateRoot: [$(ItemTemplateRoot)]
+     ItemTemplateZipRootFolder: [$(ItemTemplateZipRootFolder)]
+     CustomTemplatesFolder: [$(CustomTemplatesFolder)]
+     ItemTemplateName2 : [$(ItemTemplateName)]
+     ItemTemplateFolder : [$(ItemTemplateFolder)]
+     OutputPathWithFileName : [$(OutputPathWithFileName)]
+     OutputPathFolder : [$(OutputPathFolder)]"
+             Importance="high"/>
+  </Target>
+  
+</Project>
