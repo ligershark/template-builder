@@ -10,11 +10,11 @@
 
   <PropertyGroup>
     <VstemplateFilePath Condition=" '$(VstemplateFilePath)'=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\Misc\ReadmeMd\Definitions\CSharp.vstemplate</VstemplateFilePath>
-    <ItemTemplateRoot Condition=" ''=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\</ItemTemplateRoot>
+    <ItemTemplateRoot Condition=" '$(ItemTemplateRoot)'=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\</ItemTemplateRoot>
     <ItemTemplateZipRootFolder Condition=" '$(ItemTemplateZipRootFolder)'=='' ">Output\ItemTemplates\</ItemTemplateZipRootFolder>
     <CustomTemplatesFolder Condition=" '$(CustomTemplatesFolder)'=='' ">GetItemTemplateNameFromVSTemplatePath-Custom Templates</CustomTemplatesFolder>
   </PropertyGroup>
-  
+
   <Target Name="Demo">
     <Message Text="Calling GetItemTemplateNameFromVSTemplatePath" Importance="high"/>
     

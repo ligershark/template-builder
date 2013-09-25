@@ -17,8 +17,10 @@
         public bool Success { get; private set; }
 
         # region Inputs
-        //[Required]
+        [Required]
         public string VstemplateFilePath { get; set; }
+        [Required]
+        public string ItemTemplateRoot { get; set; }
 
         public string ItemTemplateZipRootFolder { get; set; }
 
@@ -50,7 +52,10 @@
                 var ItemTemplateFolderInfo = new System.IO.FileInfo(di.Parent.FullName);
                 ItemTemplateFolder = ItemTemplateFolderInfo.FullName + @"\";
 
-                var templateRelPath = di.Parent.Parent.Name;
+                // we need to get the name of the first folder under 'ItemTemplates' (ItemTemplateRoot)
+                var itemTemplateRootUri = new Uri(ItemTemplateRoot);
+                var relFolder = itemTemplateRootUri.MakeRelativeUri(new Uri(VstemplateFilePath)).ToString();
+                var templateRelPath = relFolder.Substring(0, relFolder.IndexOf('/'));
 
                 if (ItemTemplateZipRootFolder == null) {
                     ItemTemplateZipRootFolder = string.Empty;

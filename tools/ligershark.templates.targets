@@ -174,7 +174,8 @@
 
     <!-- ls-ItemTemplateOutputRoot -->
     <GetItemTemplateNameFromVSTemplatePath 
-      VstemplateFilePath="@(ls-ItemTemplates)" 
+      VstemplateFilePath="@(ls-ItemTemplates)"
+      ItemTemplateRoot="$(ls-ItemTemplateRoot)"
       ItemTemplateZipRootFolder="$(ls-ItemTemplateZipRootFolder)"
       CustomTemplatesFolder="$(ls-TemplateSubFolder)">
       <Output TaskParameter="ItemTemplateName" PropertyName="_ls-ItemTemplateName" />
@@ -229,6 +230,7 @@
   <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
       <VstemplateFilePath ParameterType="System.String" Required="true"/>
+      <ItemTemplateRoot ParameterType="System.String" Required="true"/>
       <!-- If provided this value should end in a '\' -->
       <ItemTemplateZipRootFolder ParameterType="System.String" Required="false"/>
       <CustomTemplatesFolder ParameterType="System.String" Required="false" />
@@ -257,7 +259,10 @@
                 var ItemTemplateFolderInfo = new System.IO.FileInfo(di.Parent.FullName);
                 ItemTemplateFolder = ItemTemplateFolderInfo.FullName + @"\";
 
-                var templateRelPath = di.Parent.Parent.Name;
+                // we need to get the name of the first folder under 'ItemTemplates' (ItemTemplateRoot)
+                var itemTemplateRootUri = new Uri(ItemTemplateRoot);
+                var relFolder = itemTemplateRootUri.MakeRelativeUri(new Uri(VstemplateFilePath)).ToString();
+                var templateRelPath = relFolder.Substring(0, relFolder.IndexOf('/'));
 
                 if (ItemTemplateZipRootFolder == null) {
                     ItemTemplateZipRootFolder = string.Empty;
