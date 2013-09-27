@@ -87,13 +87,13 @@
         <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
-    </ItemGroup>
+      
       <!-- Project Template -->
-      <!--<ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate">
+      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate">
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
-    </ItemGroup>-->
+    </ItemGroup>
     
     <Message Text="Vs Template Files found: @(ls-VsTemplateFiles)" />
   </Target>
