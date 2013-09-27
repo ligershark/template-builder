@@ -8,15 +8,32 @@
   -->
 
   <PropertyGroup>
-    <!-- Constants -->
-    <ls-ItemTemplateRoot Condition=" '$(ls-ItemTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ItemTemplates\</ls-ItemTemplateRoot>
-    <ls-ItemTemplateOutputRoot Condition=" '$(ls-ItemTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ItemTemplates\</ls-ItemTemplateOutputRoot>
+    <!-- 
+    Constants 
+    -->
     <ls-BuildRoot Condition=" '$(ls-BuildRoot)'=='' ">$(MSBuildProjectDirectory)\Build\</ls-BuildRoot>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
+    
+    <!-- 
+    Item Templates 
+    -->
+    <ls-ItemTemplateRoot Condition=" '$(ls-ItemTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ItemTemplates\</ls-ItemTemplateRoot>
+    <ls-ItemTemplateOutputRoot Condition=" '$(ls-ItemTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ItemTemplates\</ls-ItemTemplateOutputRoot>
+    
     <ls-ItemTemplatesExtendBuild Condition=" '$(ls-ItemTemplatesExtendBuild)'=='' ">true</ls-ItemTemplatesExtendBuild>
     <!-- This is where all the Item Template .zip files will be located -->
     <ls-ItemTemplateZipRootFolder Condition=" '$(ls-ItemTemplateZipRootFolder)'=='' ">Output\ItemTemplates\</ls-ItemTemplateZipRootFolder>
+    
+    <!--
+    Project Templates
+    -->
+    <ls-ProjectTemplateRoot Condition=" '$(ls-ProjectTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ProjectTemplates\</ls-ProjectTemplateRoot>
+    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
+    <!-- This is where all the Project Template .zip files will be located -->
+    <ls-ProjectTemplateZipRootFolder Condition=" '$(ls-ProjectTemplateZipRootFolder)'=='' ">Output\ProjectTemplates\</ls-ProjectTemplateZipRootFolder>
+           
+    <!-- This is normally defined by the .props file imported above ( $(MSBuildProjectDirectory)\Properties\template-builder.props )-->
     <ls-TemplateSubFolder Condition=" '$(ls-TemplateSubFolder)'=='' ">Custom Templates</ls-TemplateSubFolder>
     
     <ls-MSBuildLibPathLocal Condition=" '$(ls-MSBuildLibPathLocal)'=='' ">$(LocalAppData)\Microsoft\MSBuild\TemplateBuilder\v1.0.0.0\</ls-MSBuildLibPathLocal>
@@ -65,10 +82,20 @@
   <Target Name="ls-DiscoverItemTemplateFiles">
     <!-- Look through Item Templates folder for all .vstemplate files in the project (as Content) -->
     <ItemGroup>
-      <ls-ItemTemplates Include="$(ls-ItemTemplateRoot)**\*.vstemplate" />     
+      <!-- Item Templates -->
+      <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate">
+        <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
+        <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
+      </ls-VsTemplateFiles>
+
+      <!-- Project Template -->
+      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate">
+        <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
+        <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
+      </ls-VsTemplateFiles>
     </ItemGroup>
     
-    <Message Text="Item Templates found: @(ls-ItemTemplates)" />
+    <Message Text="Vs Template Files found: @(ls-VsTemplateFiles)" />
   </Target>
 
   <PropertyGroup>
@@ -163,19 +190,27 @@
   </PropertyGroup>
   <!-- This target will run once per value in @(ls-ItemTemplateOutputRoot) -->
   <Target Name="ls-CalculateItemGroupOutputsForItemTemplates" 
-          Inputs="%(ls-ItemTemplates.Identity)"
-          Outputs="%(ls-ItemTemplates.Identity);All"
+          Inputs="%(ls-VsTemplateFiles.Identity)"
+          Outputs="%(ls-VsTemplateFiles.Identity);All"
           DependsOnTargets="$(ls-CalculateItemGroupOutputsForItemTemplates)">
 
-    <Message Text="ls-CalculateItemGroupOutputsForItemTemplates. ls-ItemTemplates:[ @(ls-ItemTemplates)]" />
+    <Message Text="ls-CalculateItemGroupOutputsForItemTemplates. ls-VsTemplateFiles:[ @(ls-VsTemplateFiles)]" />
     <!-- By the time this target is called the item ls-DiscoverItemTemplateFiles should be fully populated. 
     No additions after this point -->
 
+    <PropertyGroup>
+      <_TemplatesRoot>%(ls-VsTemplateFiles.TemplatesRoot)</_TemplatesRoot>
+      <_ZipRootFolder>%(ls-VsTemplateFiles.ZipRootFolder)</_ZipRootFolder>
+    </PropertyGroup>
+
+    <Message Text="_TemplatesRoot:[$(_TemplatesRoot)]" Importance="high"/>
+    <Message Text="_ZipRootFolder:[$(_ZipRootFolder)]" Importance="high"/>
+    
     <!-- ls-ItemTemplateOutputRoot -->
     <GetItemTemplateNameFromVSTemplatePath 
-      VstemplateFilePath="@(ls-ItemTemplates)"
-      ItemTemplateRoot="$(ls-ItemTemplateRoot)"
-      ItemTemplateZipRootFolder="$(ls-ItemTemplateZipRootFolder)"
+      VstemplateFilePath="@(ls-VsTemplateFiles)"
+      ItemTemplateRoot="$(_TemplatesRoot)"
+      ItemTemplateZipRootFolder="$(_ZipRootFolder)"
       CustomTemplatesFolder="$(ls-TemplateSubFolder)">
       <Output TaskParameter="ItemTemplateName" PropertyName="_ls-ItemTemplateName" />
       <Output TaskParameter="ItemTemplateFolder" PropertyName="_ls-ItemTemplateFolder" />
@@ -184,9 +219,9 @@
     </GetItemTemplateNameFromVSTemplatePath>
     
     <ItemGroup>
-      <_ls-ItemTemplatesOutputs Include="@(ls-ItemTemplates->'$(ls-ItemTemplateOutputRoot)$(_ls-ItemTemplateName).zip')">
+      <_ls-ItemTemplatesOutputs Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)$(_ls-ItemTemplateName).zip')">
         <ItemTemplateName>$(_ls-ItemTemplateName)</ItemTemplateName>
-        <VsTemplateSourcePath>%(ls-ItemTemplates.Identity)</VsTemplateSourcePath>
+        <VsTemplateSourcePath>%(ls-VsTemplateFiles.Identity)</VsTemplateSourcePath>
         <ItemTemplateFolder>$(_ls-ItemTemplateFolder)</ItemTemplateFolder>
 
         <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
@@ -223,9 +258,11 @@
     </ItemGroup>
 
     <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" Importance="high"/>    
-  </Target>  
-  
-  <!-- Tasks defined below -->
+  </Target>
+
+  <!--************************************************************************************
+      Inline Tasks defined below
+  ************************************************************************************-->
   <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
       <VstemplateFilePath ParameterType="System.String" Required="true"/>
