@@ -129,9 +129,10 @@
     -->
     <ItemGroup>
       <_ls-ItemsToZip Remove="@(_ls-ItemsToZip)"/>
-      <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" 
-                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate">        
-      </_ls-ItemsToZip>
+      <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" />
+      <!-- <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" 
+                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate"> 
+      </_ls-ItemsToZip>-->
     </ItemGroup>
 
     <Message Text="Creating Item Template .zip file at [%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" />
@@ -185,9 +186,10 @@
 
     <ItemGroup>
       <_ls-IntFilesToZip Remove="@(_ls-IntFilesToZip)"/>
-      <_ls-IntFilesToZip Include="$(_ls-IntermediateItemTemplateFolder)**\*"/>
-    </ItemGroup>
-    
+      <!-- Exclude the Definitions folder from being zipped -->
+      <_ls-IntFilesToZip Include="$(_ls-IntermediateItemTemplateFolder)**\*"
+                         Exclude="$(_ls-IntermediateItemTemplateFolder)Definitions\**\*" />
+    </ItemGroup>    
     
     <!-- TODO: Does the .vstemplate file need to go into the .zip file? -->
     <MSBuild.ExtensionPack.Compression.Zip
@@ -301,6 +303,14 @@
     <!-- <Message Text="ls-ItemTemplateOutputRoot: $(ls-ItemTemplateOutputRoot)" Importance="high" />
         <Message Text="Folders to inspect: %(_ls-ItemTemplatesOutputs.OutputPathFolder)" Importance="high"/>
         <Error Text="************** stopping" /> -->
+
+        <ItemGroup>
+          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateRoot)\**\*">
+          </ls-TemplateInfoFiles>
+          <!-- ls-ItemTemplateRoot -->
+        </ItemGroup>
+
+
   </Target>
 
   <!--************************************************************************************
