@@ -87,13 +87,13 @@
         <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
-
+    </ItemGroup>
       <!-- Project Template -->
-      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate">
+      <!--<ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate">
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
-    </ItemGroup>
+    </ItemGroup>-->
     
     <Message Text="Vs Template Files found: @(ls-VsTemplateFiles)" />
   </Target>
@@ -109,7 +109,8 @@
   
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
   <Target Name="ls-CreateZipForEachItemTemplate"
-          Outputs="%(_ls-ItemTemplatesOutputs.Identity)" 
+          Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
+          Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
           DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">
 
     <PropertyGroup>
@@ -157,7 +158,7 @@
           UseHardLinksIfPossible="$(ls-UseHardLinksForItemTemplatesCopy)">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
-
+    
     <Message Text="_ls-ItemTemplatesOutputs.Filename : [%(_ls-ItemTemplatesOutputs.Filename)]" Importance="high"/>
     <Message Text="Zipping the following files for Item Template: @(ls-temp-FilesCopied)" Importance="high"/>
     <Message Text="***: _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" Importance="high"/>
