@@ -81,9 +81,8 @@
   </PropertyGroup>
   
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
-  <Target Name="ls-CreateZipForEachItemTemplate" 
-          Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
-          Outputs="%(_ls-ItemTemplatesOutputs.Identity)"
+  <Target Name="ls-CreateZipForEachItemTemplate"
+          Outputs="%(_ls-ItemTemplatesOutputs.Identity)" 
           DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">
 
     <PropertyGroup>
