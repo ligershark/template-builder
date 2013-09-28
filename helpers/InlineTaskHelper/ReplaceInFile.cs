@@ -20,8 +20,8 @@
             if (FilesToReplace == null || FilesToReplace.Length <= 0 || 
                 Replacements == null || Replacements.Length <=0 ) {
                 return Success;
-            }
-            
+            }           
+
             List<Microsoft.Build.Framework.ITaskItem> updatedFileList = new List<Microsoft.Build.Framework.ITaskItem>();
             // build up a dictionary of the replacements to minimize traversing
             Dictionary<string, string> replacements = new Dictionary<string, string>();            

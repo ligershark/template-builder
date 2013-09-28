@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Demo" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\InlineTaskHelper.dll</TasksAssemblyPath>
+    <TempFolder Condition=" ''=='' ">$(MSBuildThisFileDirectory)..\obj\Debug\ReplaceInFiles\</TempFolder>
+  </PropertyGroup>
+  
+  <UsingTask TaskName="ParseTemplateInfoFile"
+             AssemblyFile="$(TasksAssemblyPath)"/>
+
+  <PropertyGroup>
+    <SampleFile Condition=" '$(SampleFile)'=='' ">$(MSBuildThisFileDirectory)templateinfo.xml</SampleFile>
+  </PropertyGroup>
+
+
+  <Target Name="Demo">
+    <Message Text="Reading templateinfo.xml at [$(SampleFile)]" Importance="high"/>
+    
+    <ParseTemplateInfoFile FilePath="$(SampleFile)">
+      <Output TaskParameter="Include" PropertyName="Include"/>
+      <Output TaskParameter="Exclude" PropertyName="Exclude"/>
+      <Output TaskParameter="Replacements" ItemName="Replacements"/>
+    </ParseTemplateInfoFile>
+
+    <Message Text="Include : $(Include)" Importance="high"/>
+    <Message Text="Exclude : $(Exclude)" Importance="high"/>    
+    <Message Text="Replacements : @(Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="high"/>
+    
+  </Target>
+  
+</Project>

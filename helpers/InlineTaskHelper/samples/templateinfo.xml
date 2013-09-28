@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TemplateInfo>
+  <Replacements Include="**\*" Exclude="**\*.png;**\*.jpg;">
+    <add key="SideWaffleProjectName" value="$safeprojectname$"/>
+    <add key="CustomName" value="SomeOtherString"/>
+  </Replacements>
+</TemplateInfo>

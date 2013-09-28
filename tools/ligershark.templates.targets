@@ -106,13 +106,10 @@
       ls-InitalizeItemTemplateOutputFolder;
       ls-CalculateItemGroupOutputsForItemTemplates;
       ls-CopyTemplateFilesToIntermediateFolder;
-      
+      ls-PreprocessTemplates;
     </ls-CreateZipForEachItemTemplateDependsOn>
-
-    <!--ls-PreprocessTemplates;-->
   </PropertyGroup>
   
-
   <PropertyGroup>
     <ls-CopyTemplateFilesToIntermediateFolderDependsOn>
       $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);      
@@ -325,8 +322,33 @@
           Outputs="%(ls-TemplateInfoFiles.Identity)"
           DependsOnTargets="$(ls-PreprocessEachTemplateInfoFileDependsOn)">
           
-          <Message Text="templateinfo: %(ls-TemplateInfoFiles.Identity)" Importance="high"/>
-          <Error Text="********************"/>
+    <Message Text="ls-TemplateInfoFiles.Identity: %(ls-TemplateInfoFiles.Identity)" Importance="low"/>
+    <Message Text="ls-TemplateInfoFiles.Directory: %(ls-TemplateInfoFiles.Directory)" Importance="low"/>
+
+    <PropertyGroup>
+      <_TemplateInfoPath>%(ls-TemplateInfoFiles.FullPath)</_TemplateInfoPath>
+      <_TemplateDir>%(ls-TemplateInfoFiles.RootDir)%(ls-TemplateInfoFiles.Directory)..\</_TemplateDir>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <_FilesToReplace Remove="@(_FilesToReplace)"/>
+      <!-- TODO: There should be a way to either opt in or opt out of replacements -->
+      <_FilesToReplace Include="$(_TemplateDir)**\*"
+                       Exclude="$(_TemplateDir)Definitions\**\*"/>
+    </ItemGroup>
+
+    <ParseTemplateInfoFile FilePath="$(_TemplateInfoPath)">
+      <Output TaskParameter="Include" PropertyName="_ls-Include"/>
+      <Output TaskParameter="Exclude" PropertyName="_ls-Exclude"/>
+      <Output TaskParameter="Replacements" ItemName="_ls-Replacements"/>
+    </ParseTemplateInfoFile>
+    
+    <Message Text="From templateinfo, Include : $(_ls-Include)" Importance="low"/>
+    <Message Text="From templateinfo, Exclude : $(_ls-Exclude)" Importance="low"/>
+    <Message Text="From templateinfo, Replacements : @(_ls-Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="low"/>  
+    
+    <ReplaceInFiles FilesToReplace="@(_FilesToReplace)"
+                    Replacements="@(_ls-Replacements)" />
   </Target>
 
   <!--************************************************************************************
@@ -415,7 +437,7 @@
       </Code>
     </Task>
   </UsingTask>
-
+  
   <UsingTask TaskName="ReplaceInfiles" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
       <FilesToReplace ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
@@ -433,6 +455,7 @@
       <Using Namespace="Microsoft.Build.Utilities" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
+          Log.LogMessage("ReplaceInFiles called");
             if (FilesToReplace == null || FilesToReplace.Length <= 0 || 
                 Replacements == null || Replacements.Length <=0 ) {
                 return Success;
@@ -467,6 +490,77 @@
             }
 
             this.UpdatedFiles = updatedFileList.ToArray();        
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <UsingTask TaskName="ParseTemplateInfoFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <FilePath ParameterType="System.String" Required="true"/>
+      <ReplacementsItemSpec ParameterType="System.String" />
+
+      <!-- Outputs -->
+      <Include ParameterType="System.String" Output="true"/>
+      <Exclude ParameterType="System.String" Output="true"/>
+      <Replacements ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.Xml" />
+      <Reference Include="System.Xml.Linq" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Net" />
+      <Using Namespace="System.Xml.Linq"/>
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+         Log.LogMessage("ParseTemplateInfoFile called on file [{0}]", FilePath);
+
+            if (!File.Exists(FilePath)) {
+                Log.LogError("templateinfo.xml file not found at [{0}]",FilePath);
+                return false;
+            }
+            if(string.IsNullOrEmpty(ReplacementsItemSpec)){
+                ReplacementsItemSpec = "Replacements";
+            }
+
+            try {
+                XDocument doc = XDocument.Load(FilePath);
+                var result = (from r in doc.Root.Elements("Replacements")
+                             select new {
+                                 Include = r.Attribute("Include").Value,
+                                 Exclude = r.Attribute("Exclude").Value,
+                                 Replacements = (
+                                     from a in r.Elements("add")
+                                     select new {
+                                         Key = a.Attribute("key").Value,
+                                         Value = a.Attribute("value").Value
+                                     }
+                                 )
+                             }).Single();
+
+                this.Include = result.Include;
+                this.Exclude = result.Exclude;
+                List<ITaskItem> repList = new List<ITaskItem>();
+                
+                foreach(var item in result.Replacements){
+                    ITaskItem rep = new TaskItem(ReplacementsItemSpec);
+                    rep.SetMetadata("key",item.Key);
+                    rep.SetMetadata("value",item.Value);
+                    repList.Add(rep);
+                }
+
+                Replacements = repList.ToArray();
+
+            }
+            catch (Exception ex) {
+                Log.LogError("Unable to parse template info file [{0}]. Details=[{1}]",FilePath,ex.ToString());
+                return false;
+            }
+            return true;    
         ]]>
       </Code>
     </Task>
