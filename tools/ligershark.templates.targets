@@ -287,7 +287,6 @@
       <Using Namespace="Microsoft.Build.Framework" />
       <Using Namespace="Microsoft.Build.Utilities" />
       <Code Type="Fragment" Language="cs">
-        <!-- TODO: Make the folder name 'SideWaffle' into a parameter -->
         <![CDATA[
                 Log.LogMessage("GetItemTemplateNameFromVSTemplatePath Starting");
                 System.IO.FileInfo fi = new System.IO.FileInfo(VstemplateFilePath);
@@ -345,6 +344,62 @@
 
                 OutputPathWithFileName = string.Format(@"{0}{1}", OutputPathFolder, itRootFileName);   
             ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <UsingTask TaskName="ReplaceInfiles" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <FilesToReplace ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
+      <Replacements ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
+
+      <!-- Outputs -->
+      <UpdatedFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true"/>
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Net" />
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            if (FilesToReplace == null || FilesToReplace.Length <= 0 || 
+                Replacements == null || Replacements.Length <=0 ) {
+                return Success;
+            }
+            
+            List<Microsoft.Build.Framework.ITaskItem> updatedFileList = new List<Microsoft.Build.Framework.ITaskItem>();
+            // build up a dictionary of the replacements to minimize traversing
+            Dictionary<string, string> replacements = new Dictionary<string, string>();            
+            foreach (var replacement in Replacements) {
+                IDictionary customMetadata = replacement.CloneCustomMetadata();
+                foreach(var key in customMetadata.Keys){
+                    replacements[key as string] = customMetadata[key] as string;
+                }
+            }
+
+            foreach (var item in FilesToReplace) {             
+                string filePath = item.GetMetadata("FullPath");
+                string originalFileText = File.ReadAllText(filePath);
+                string replacedText = originalFileText;
+
+                foreach (string key in replacements.Keys) {
+                    replacedText = System.Text.RegularExpressions.Regex.Replace(replacedText, key, replacements[key]);
+                }
+
+                if (!originalFileText.Equals(replacedText)) {
+                    Log.LogMessage("Updating text after replacements in file [{0}]", filePath);
+                    File.WriteAllText(filePath, replacedText);
+                }
+                else {
+                    Log.LogMessage("Not writing out file because no replacments detected [{0}]", filePath);
+                }
+            }
+
+            this.UpdatedFiles = updatedFileList.ToArray();        
+        ]]>
       </Code>
     </Task>
   </UsingTask>

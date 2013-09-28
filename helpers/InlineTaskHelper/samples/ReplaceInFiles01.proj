@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Demo" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\InlineTaskHelper.dll</TasksAssemblyPath>
+    <TempFolder Condition=" ''=='' ">$(MSBuildThisFileDirectory)..\obj\Debug\ReplaceInFiles\</TempFolder>
+  </PropertyGroup>
+  
+  <UsingTask TaskName="ReplaceInFiles"
+             AssemblyFile="$(TasksAssemblyPath)"/>
+
+  <PropertyGroup>
+    <SampleFile Condition=" '$(SampleFile)'=='' ">replace01.csproj</SampleFile>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <Replacements Include="SideWaffleProjectName">
+      <SideWaffleProjectName>$safeprojectname$</SideWaffleProjectName>
+    </Replacements>
+  </ItemGroup>
+  
+  <Target Name="Demo">
+    <MakeDir Directories="$(TempFolder)"/>
+
+    <ItemGroup>
+      <_SampleFileItem Include="$(SampleFile)"/>
+      <_DestFiles Include="@(_SampleFileItem->'$(TempFolder)%(RecursiveDir)%(Filename)%(Extension)')"/>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_SampleFileItem)"
+          DestinationFiles="@(_DestFiles)" />
+
+    <ReplaceInFiles FilesToReplace="@(_DestFiles)"
+                    Replacements="@(Replacements)" />    
+  </Target>
+  
+</Project>

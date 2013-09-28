@@ -45,9 +45,15 @@
   <ItemGroup>
     <Compile Include="GetItemTemplateNameFromVSTemplatePath.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReplaceInFile.cs" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
+    <Content Include="samples\replace01.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="samples\ReplaceInFiles01.proj">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="samples\GetItemTemplateNameFromVSTemplatePath01.proj">
       <SubType>Designer</SubType>
     </None>
