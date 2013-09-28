@@ -74,6 +74,7 @@
     <ls-ProcessItemTemplatesDependsOn>
       $(ls-ProcessItemTemplatesDependsOn);
       ls-DiscoverItemTemplateFiles;
+      ls-CreateZipForEachItemTemplate;
       ls-AddCreatedItemTemplateZipFilesToProject;
     </ls-ProcessItemTemplatesDependsOn>
   </PropertyGroup>
@@ -104,18 +105,24 @@
       ls-DiscoverItemTemplateFiles;
       ls-InitalizeItemTemplateOutputFolder;
       ls-CalculateItemGroupOutputsForItemTemplates;
+      ls-CopyTemplateFilesToIntermediateFolder;
+      
     </ls-CreateZipForEachItemTemplateDependsOn>
+
+    <!--ls-PreprocessTemplates;-->
   </PropertyGroup>
   
+
+  <PropertyGroup>
+    <ls-CopyTemplateFilesToIntermediateFolderDependsOn>
+      $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);      
+    </ls-CopyTemplateFilesToIntermediateFolderDependsOn>
+  </PropertyGroup>
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
-  <Target Name="ls-CreateZipForEachItemTemplate"
+  <Target Name="ls-CopyTemplateFilesToIntermediateFolder"
           Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
           Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
-          DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">
-
-    <PropertyGroup>
-      <_ls-temp-VsTemplateSourcePath></_ls-temp-VsTemplateSourcePath>
-    </PropertyGroup>
+          DependsOnTargets="$(ls-CopyTemplateFilesToIntermediateFolderDependsOn)">
     <Message Text="Determining files to incude in Item Template .zip file for [%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)]"/>
 
     <!-- 
@@ -124,9 +131,10 @@
     -->
     <ItemGroup>
       <_ls-ItemsToZip Remove="@(_ls-ItemsToZip)"/>
-      <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" 
-                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate">        
-      </_ls-ItemsToZip>
+      <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" />
+      <!-- <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" 
+                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate"> 
+      </_ls-ItemsToZip>-->
     </ItemGroup>
 
     <Message Text="Creating Item Template .zip file at [%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" />
@@ -143,11 +151,12 @@
     </ItemGroup>
     <Delete Files="@(_ls-FilesToDelete)" />   
     <MakeDir Directories="$(_ls-IntermediateItemTemplateFolder)"/>
-    <MakeDir Directories="" />
 
     <ItemGroup>
       <ls-temp-FilesCopied Remove="@(ls-temp-FilesCopied)" />
     </ItemGroup>
+
+    <!-- TODO: This needs to be refactored into its own target -->
     <!-- Copy over the .vstemplate to the root folder and then copy all files -->
     <Copy SourceFiles="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)"
           DestinationFiles="$(_ls-IntermediateItemTemplateFolder)%(_ls-ItemTemplatesOutputs.Filename).vstemplate">
@@ -158,17 +167,36 @@
           UseHardLinksIfPossible="$(ls-UseHardLinksForItemTemplatesCopy)">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
-    
+
     <Message Text="_ls-ItemTemplatesOutputs.Filename : [%(_ls-ItemTemplatesOutputs.Filename)]" Importance="high"/>
     <Message Text="Zipping the following files for Item Template: @(ls-temp-FilesCopied)" Importance="high"/>
     <Message Text="***: _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" Importance="high"/>
     <Message Text="***: _ls-IntermediateItemTemplateFolder:[$(_ls-IntermediateItemTemplateFolder)]" Importance="high" />
     <Message Text="***: _ls-ItemTemplatesOutputs.Identity:[%(_ls-ItemTemplatesOutputs.Identity)]" Importance="high" />
     <Message Text="***: _ls-ItemTemplatesOutputs.IntermediateItemTemplateFolder:[%(_ls-ItemTemplatesOutputs.IntermediateItemTemplateFolder)]" Importance="high" />
+  </Target>
+
+  <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
+  <Target Name="ls-CreateZipForEachItemTemplate"
+          Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
+          Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
+          DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">
+
+    <PropertyGroup>
+      <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(_ls-ItemTemplatesOutputs.ItemTemplateName)\</_ls-IntermediateItemTemplateFolder>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_ls-IntFilesToZip Remove="@(_ls-IntFilesToZip)"/>
+      <!-- Exclude the Definitions folder from being zipped -->
+      <_ls-IntFilesToZip Include="$(_ls-IntermediateItemTemplateFolder)**\*"
+                         Exclude="$(_ls-IntermediateItemTemplateFolder)Definitions\**\*" />
+    </ItemGroup>    
+    
     <!-- TODO: Does the .vstemplate file need to go into the .zip file? -->
     <MSBuild.ExtensionPack.Compression.Zip
       TaskAction="Create"
-      CompressFiles="@(ls-temp-FilesCopied)"
+      CompressFiles="@(_ls-IntFilesToZip)"
       ZipFileName="%(_ls-ItemTemplatesOutputs.Identity)"
       RemoveRoot="$(_ls-IntermediateItemTemplateFolder)"
       CompressionLevel="BestCompression" />
@@ -235,7 +263,7 @@
     <Message Text="ls-ItemTemplateZipRootFolder: $(ls-ItemTemplateZipRootFolder)" Importance="high" />
     <Message Text="OutputPathWithFileName:$(OutputPathWithFileName)" Importance="high"/>
     <Message Text="%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)" Importance="high"/>
-    <!--<Error Text="************ stopping build *********************" />-->
+
     <Message Text="_ls-ItemTemplatesOutputs.VsTemplateSourcePath: %(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" />
   </Target>
 
@@ -259,6 +287,46 @@
     </ItemGroup>
 
     <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" Importance="high"/>    
+  </Target>
+
+  <!--
+    Preprocessing elements below
+  -->
+  <PropertyGroup>
+    <ls-PreprocessTemplatesDependsOn>
+      $(ls-PreprocessTemplatesDependsOn);
+      ls-PreprocessDiscoverTempInfoFiles;
+      ls-PreprocessEachTemplateInfoFile;
+    </ls-PreprocessTemplatesDependsOn>
+  </PropertyGroup>
+  <Target Name="ls-PreprocessTemplates" DependsOnTargets="$(ls-PreprocessTemplatesDependsOn)"/>
+
+  <!-- This target will find all the templateinfo.xml files -->
+  <Target Name="ls-PreprocessDiscoverTempInfoFiles">
+    <!-- <Message Text="ls-ItemTemplateOutputRoot: $(ls-ItemTemplateOutputRoot)" Importance="high" />
+        <Message Text="Folders to inspect: %(_ls-ItemTemplatesOutputs.OutputPathFolder)" Importance="high"/>
+        <Error Text="************** stopping" /> -->
+
+        <ItemGroup>
+          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\templateinfo.xml" />
+        </ItemGroup>
+
+        <Message Text="ls-TemplateInfoFiles: @(ls-TemplateInfoFiles)"/>        
+  </Target>
+
+  <PropertyGroup>
+    <ls-PreprocessEachTemplateInfoFileDependsOn>
+      $(ls-PreprocessEachTemplateInfoFileDependsOn);
+      ls-PreprocessDiscoverTempInfoFiles;
+    </ls-PreprocessEachTemplateInfoFileDependsOn>
+  </PropertyGroup>
+  <!-- This will run once per file in @(ls-TemplateInfoFiles) -->
+  <Target Name="ls-PreprocessEachTemplateInfoFile"
+          Outputs="%(ls-TemplateInfoFiles.Identity)"
+          DependsOnTargets="$(ls-PreprocessEachTemplateInfoFileDependsOn)">
+          
+          <Message Text="templateinfo: %(ls-TemplateInfoFiles.Identity)" Importance="high"/>
+          <Error Text="********************"/>
   </Target>
 
   <!--************************************************************************************
