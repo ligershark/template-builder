@@ -106,8 +106,10 @@
       ls-InitalizeItemTemplateOutputFolder;
       ls-CalculateItemGroupOutputsForItemTemplates;
       ls-CopyTemplateFilesToIntermediateFolder;
-      ls-PreprocessTemplates;
+      
     </ls-CreateZipForEachItemTemplateDependsOn>
+
+    <!--ls-PreprocessTemplates;-->
   </PropertyGroup>
   
 
@@ -261,7 +263,7 @@
     <Message Text="ls-ItemTemplateZipRootFolder: $(ls-ItemTemplateZipRootFolder)" Importance="high" />
     <Message Text="OutputPathWithFileName:$(OutputPathWithFileName)" Importance="high"/>
     <Message Text="%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)" Importance="high"/>
-    <!--<Error Text="************ stopping build *********************" />-->
+
     <Message Text="_ls-ItemTemplatesOutputs.VsTemplateSourcePath: %(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" />
   </Target>
 
@@ -293,7 +295,8 @@
   <PropertyGroup>
     <ls-PreprocessTemplatesDependsOn>
       $(ls-PreprocessTemplatesDependsOn);
-      ls-PreprocessDiscoverTempInfoFiles
+      ls-PreprocessDiscoverTempInfoFiles;
+      ls-PreprocessEachTemplateInfoFile;
     </ls-PreprocessTemplatesDependsOn>
   </PropertyGroup>
   <Target Name="ls-PreprocessTemplates" DependsOnTargets="$(ls-PreprocessTemplatesDependsOn)"/>
@@ -305,12 +308,25 @@
         <Error Text="************** stopping" /> -->
 
         <ItemGroup>
-          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateRoot)\**\*">
-          </ls-TemplateInfoFiles>
-          <!-- ls-ItemTemplateRoot -->
+          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\templateinfo.xml" />
         </ItemGroup>
 
+        <Message Text="ls-TemplateInfoFiles: @(ls-TemplateInfoFiles)"/>        
+  </Target>
 
+  <PropertyGroup>
+    <ls-PreprocessEachTemplateInfoFileDependsOn>
+      $(ls-PreprocessEachTemplateInfoFileDependsOn);
+      ls-PreprocessDiscoverTempInfoFiles;
+    </ls-PreprocessEachTemplateInfoFileDependsOn>
+  </PropertyGroup>
+  <!-- This will run once per file in @(ls-TemplateInfoFiles) -->
+  <Target Name="ls-PreprocessEachTemplateInfoFile"
+          Outputs="%(ls-TemplateInfoFiles.Identity)"
+          DependsOnTargets="$(ls-PreprocessEachTemplateInfoFileDependsOn)">
+          
+          <Message Text="templateinfo: %(ls-TemplateInfoFiles.Identity)" Importance="high"/>
+          <Error Text="********************"/>
   </Target>
 
   <!--************************************************************************************
