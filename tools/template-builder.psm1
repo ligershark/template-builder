@@ -183,3 +183,63 @@ function AddAssetTagToVisxManfiestIfNotExists(){
         $vsixXml.Save($vsixFilePathToUpdate)
     }
 }
+
+function UpdateProjectTemplateFilesToNone(){
+    param(
+        $projet = (Get-Project)
+    )
+
+    $projTemplatesItem = ($project.ProjectItems | Where-Object { $_.Name.Contains("ProjectTemplates") })
+    if(!($projTemplatesItem)){
+        return
+    }
+
+    # we need to loop through each sub item and mark all files as None
+    MarkAllChildrenAsNone -$projTemplatesItem
+}
+
+function MarkAllChildrenAsNone(){
+    param(
+    [Parameter(Mandatory=$true)]
+    $projectItem
+    )
+
+    foreach($pItem in $projectItem.ProjectItems){
+        # mark the item as None and recurse
+        MarkItemAsNone -projectItem $pItem
+
+        if($pItem.ProjectItems) {
+            MarkAllChildrenAsNone $pItem.Collection
+        }
+    }
+}
+
+function MarkItemAsNone(){
+    param(
+    [Parameter(Mandatory=$true)]
+    $projectItem
+    )
+
+    # we need to see if the $projectItem has a BuildAction property and if so set it
+    
+    # we will supress the error message as it's by design, but we need to restore the $ErrorActionPreference value
+    $prevErrorAction = $ErrorActionPreference 
+    $ErrorActionPreference= 'silentlycontinue'
+
+    $buildAction = ($projectItem.Properties.Item("BuildAction"))
+    $ErrorActionPreference= $prevErrorAction
+    if($buildAction){
+        # if the property is not null then it exists on the projectitem, update it to None
+        # http://stackoverflow.com/questions/7423564/specify-build-action-of-content-nuget
+        $projectItem.Properties.Item("BuildAction").Value = [int]0
+    }
+}
+
+
+Export-ModuleMember -function UpdateProjectTemplateFilesToNone
+
+# just for debugging, should be removed
+Export-ModuleMember -function *
+
+
+
