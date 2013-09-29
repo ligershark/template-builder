@@ -65,12 +65,11 @@
   <PropertyGroup>
     <CoreCompileDependsOn Condition=" '$(ls-ItemTemplatesExtendBuild)'=='true' ">
       CopyMSBuildFilesToLocalAppData;
+      RemoveTemplateFilesFromCompile;
       $(CoreCompileDependsOn);
       ls-ProcessItemTemplates;
     </CoreCompileDependsOn>
-  </PropertyGroup>  
-
-  <PropertyGroup>
+  
     <ls-ProcessItemTemplatesDependsOn>
       $(ls-ProcessItemTemplatesDependsOn);
       ls-DiscoverItemTemplateFiles;
@@ -78,6 +77,23 @@
       ls-AddCreatedItemTemplateZipFilesToProject;
     </ls-ProcessItemTemplatesDependsOn>
   </PropertyGroup>
+
+  <Target Name="RemoveTemplateFilesFromCompile" BeforeTargets="CoreCompile">
+    <Message Text="Removing ItemTemplate and ProjectTemplate files from Compile list"/>
+
+    <!-- Files under ItemTemplates and ProjectTemplates should not be included in the Compile list -->
+    <ItemGroup>
+      <Compile Remove="$(ls-ItemTemplateRoot)**\*"/>
+      <Compile Remove="$(ls-ProjectTemplateRoot)**\*"/>
+
+      <Compile Remove="ProjectTemplates\**\*"/>
+      <Compile Remove="ItemTemplates\**\*"/>
+    </ItemGroup>
+
+    <Message Text="ls-ItemTemplateRoot:[$(ls-ItemTemplateRoot)]" Importance="low"/>
+    <Message Text="ls-ProjectTemplateRoot:[$(ls-ProjectTemplateRoot)]" Importance="low"/>
+  </Target>
+
   <Target Name="ls-ProcessItemTemplates" DependsOnTargets="$(ls-ProcessItemTemplatesDependsOn)" />
   
   <Target Name="ls-DiscoverItemTemplateFiles">
@@ -300,10 +316,7 @@
 
   <!-- This target will find all the templateinfo.xml files -->
   <Target Name="ls-PreprocessDiscoverTempInfoFiles">
-    <!-- <Message Text="ls-ItemTemplateOutputRoot: $(ls-ItemTemplateOutputRoot)" Importance="high" />
-        <Message Text="Folders to inspect: %(_ls-ItemTemplatesOutputs.OutputPathFolder)" Importance="high"/>
-        <Error Text="************** stopping" /> -->
-
+    <Message Text="Looking for templateinfo.xml files under [$(ls-ItemTemplateOutputRoot)]" Importance="low"/>
         <ItemGroup>
           <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\templateinfo.xml" />
         </ItemGroup>
@@ -337,7 +350,10 @@
                        Exclude="$(_TemplateDir)Definitions\**\*"/>
     </ItemGroup>
 
-    <ParseTemplateInfoFile FilePath="$(_TemplateInfoPath)">
+    <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="low"/>
+    <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="low"/>
+    
+    <ParseTemplateInfoFile FilePath="$(_TemplateInfoPath)" Condition=" '$(_TemplateInfoPath)'!='' ">
       <Output TaskParameter="Include" PropertyName="_ls-Include"/>
       <Output TaskParameter="Exclude" PropertyName="_ls-Exclude"/>
       <Output TaskParameter="Replacements" ItemName="_ls-Replacements"/>
@@ -348,7 +364,8 @@
     <Message Text="From templateinfo, Replacements : @(_ls-Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="low"/>  
     
     <ReplaceInFiles FilesToReplace="@(_FilesToReplace)"
-                    Replacements="@(_ls-Replacements)" />
+                    Replacements="@(_ls-Replacements)" 
+                    Condition=" '@(_FilesToReplace)'!='' and '@(_ls-Replacements)'!='' " />
   </Target>
 
   <!--************************************************************************************
