@@ -39,7 +39,7 @@
 
     <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
 
-    <ProjectsToBuild Include="$(SourceRoot)TemplatePack.sln" />
+    <!-- <ProjectsToBuild Include="$(SourceRoot)TemplatePack.sln" /> -->
   </ItemGroup>
 
   <PropertyGroup>
@@ -52,7 +52,7 @@
     </BuildProjectsDependsOn>
   </PropertyGroup>
 
-  <Target Name="BuildProjects" DependsOnTargets=""/>
+  <Target Name="BuildProjects" DependsOnTargets="$(BuildProjectsDependsOn)"/>
   <Target Name="CoreBuildProjects">
     <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);OutputPath=$(OutputRoot)"/>
   </Target>
