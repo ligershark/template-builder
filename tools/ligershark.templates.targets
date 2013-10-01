@@ -4,7 +4,7 @@
           Condition="Exists('$(MSBuildProjectDirectory)\Properties\template-builder.props')" />
   <!--
   1. Discover all .vstemplate files
-  2. For each .vstemplate file, go up one folder and create a .zip from the content (exluding the Definitions folder)
+  2. For each .vstemplate file, go up one folder and create a .zip from the content (exluding the _Definitions folder)
   -->
 
   <PropertyGroup>
@@ -139,14 +139,14 @@
     <Message Text="Determining files to incude in Item Template .zip file for [%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)]"/>
 
     <!-- 
-    Grab all the files from the folder (excluding any .vstemplate file and any files under Definitions\)
+    Grab all the files from the folder (excluding any .vstemplate file and any files under _Definitions\)
     and create a .zip file from it in the output folder.    
     -->
     <ItemGroup>
       <_ls-ItemsToZip Remove="@(_ls-ItemsToZip)"/>
       <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" />
       <!-- <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" 
-                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate"> 
+                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)_Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate"> 
       </_ls-ItemsToZip>-->
     </ItemGroup>
 
@@ -201,9 +201,9 @@
 
     <ItemGroup>
       <_ls-IntFilesToZip Remove="@(_ls-IntFilesToZip)"/>
-      <!-- Exclude the Definitions folder from being zipped -->
+      <!-- Exclude the _Definitions folder from being zipped -->
       <_ls-IntFilesToZip Include="$(_ls-IntermediateItemTemplateFolder)**\*"
-                         Exclude="$(_ls-IntermediateItemTemplateFolder)Definitions\**\*" />
+                         Exclude="$(_ls-IntermediateItemTemplateFolder)_Definitions\**\*" />
     </ItemGroup>    
     
     <!-- TODO: Does the .vstemplate file need to go into the .zip file? -->
@@ -347,7 +347,7 @@
       <_FilesToReplace Remove="@(_FilesToReplace)"/>
       <!-- TODO: There should be a way to either opt in or opt out of replacements -->
       <_FilesToReplace Include="$(_TemplateDir)**\*"
-                       Exclude="$(_TemplateDir)Definitions\**\*"/>
+                       Exclude="$(_TemplateDir)_Definitions\**\*"/>
     </ItemGroup>
 
     <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="low"/>
@@ -366,6 +366,27 @@
     <ReplaceInFiles FilesToReplace="@(_FilesToReplace)"
                     Replacements="@(_ls-Replacements)" 
                     Condition=" '@(_FilesToReplace)'!='' and '@(_ls-Replacements)'!='' " />
+  </Target>
+
+  <PropertyGroup>
+    <CleanDependsOn>
+      $(CleanDependsOn);
+      CleanTemplateBuilderFiles
+    </CleanDependsOn>
+    <CleanTemplateBuilderFilesDependsOn>
+      $(CleanTemplateBuilderFilesDependsOn);      
+    </CleanTemplateBuilderFilesDependsOn>
+  </PropertyGroup>
+  <Target Name="CleanTemplateBuilderFiles" 
+          DependsOnTargets="$(CleanTemplateBuilderFilesDependsOn)"
+          >
+    <Message Text="Deleting template-builder files under [$(ls-ItemTemplateOutputRoot)]"/>
+    <ItemGroup Condition=" '$(ls-ItemTemplateOutputRoot)'!='' ">
+      <_TemplateBuilderFiles Remove="@(_TemplateBuilderFiles)"/>
+      <_TemplateBuilderFiles Include="$(ls-ItemTemplateOutputRoot)**\*"/>
+    </ItemGroup>
+    <Delete Files="@(_TemplateBuilderFiles)" Condition=" '$(ls-ItemTemplateOutputRoot)'!='' "/>
+    <RemoveDir Directories="$(ls-ItemTemplateOutputRoot)"/>
   </Target>
 
   <!--************************************************************************************

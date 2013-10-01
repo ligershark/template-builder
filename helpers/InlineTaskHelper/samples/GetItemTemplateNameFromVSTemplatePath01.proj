@@ -9,7 +9,7 @@
              AssemblyFile="$(TasksAssemblyPath)"/>
 
   <PropertyGroup>
-    <VstemplateFilePath Condition=" '$(VstemplateFilePath)'=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\Misc\ReadmeMd\Definitions\CSharp.vstemplate</VstemplateFilePath>
+    <VstemplateFilePath Condition=" '$(VstemplateFilePath)'=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\Misc\ReadmeMd\_Definitions\CSharp.vstemplate</VstemplateFilePath>
     <ItemTemplateRoot Condition=" '$(ItemTemplateRoot)'=='' ">$(MSBuildThisFileDirectory)..\..\..\content\ItemTemplates\</ItemTemplateRoot>
     <ItemTemplateZipRootFolder Condition=" '$(ItemTemplateZipRootFolder)'=='' ">Output\ItemTemplates\</ItemTemplateZipRootFolder>
     <CustomTemplatesFolder Condition=" '$(CustomTemplatesFolder)'=='' ">GetItemTemplateNameFromVSTemplatePath-Custom Templates</CustomTemplatesFolder>
