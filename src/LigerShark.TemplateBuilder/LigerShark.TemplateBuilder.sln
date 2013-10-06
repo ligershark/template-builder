@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InlineTaskHelper", "InlineTaskHelper.csproj", "{6C8A0DBB-97DC-421A-8717-DCCBFB8EB39F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LigerShark.TemplateBuilder.Tasks", "LigerShark.TemplateBuilder.Tasks.csproj", "{6C8A0DBB-97DC-421A-8717-DCCBFB8EB39F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

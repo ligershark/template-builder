@@ -1,4 +1,4 @@
-﻿namespace InlineCode {
+﻿namespace LigerShark.TemplateBuilder.Tasks {
     using System;
     using System.Collections;
     using System.Collections.Generic;
