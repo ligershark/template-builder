@@ -46,7 +46,7 @@
     <Compile Include="GetItemTemplateNameFromVSTemplatePath.cs" />
     <Compile Include="ParseTemplateInfoFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReplaceInFile.cs" />
+    <Compile Include="ReplaceInFileOld.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="samples\replace01.csproj" />
