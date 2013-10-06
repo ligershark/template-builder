@@ -16,23 +16,23 @@
         [Microsoft.Build.Framework.Output]
         public Microsoft.Build.Framework.ITaskItem[] UpdatedFiles { get; set; }
         public override bool Execute() {
-
-            if (FilesToReplace == null || FilesToReplace.Length <= 0 || 
-                Replacements == null || Replacements.Length <=0 ) {
+            Success = true;
+            if (FilesToReplace == null || FilesToReplace.Length <= 0 ||
+                Replacements == null || Replacements.Length <= 0) {
                 return Success;
-            }           
+            }
 
             List<Microsoft.Build.Framework.ITaskItem> updatedFileList = new List<Microsoft.Build.Framework.ITaskItem>();
             // build up a dictionary of the replacements to minimize traversing
-            Dictionary<string, string> replacements = new Dictionary<string, string>();            
+            Dictionary<string, string> replacements = new Dictionary<string, string>();
             foreach (var replacement in Replacements) {
                 IDictionary customMetadata = replacement.CloneCustomMetadata();
-                foreach(var key in customMetadata.Keys){
+                foreach (var key in customMetadata.Keys) {
                     replacements[key as string] = customMetadata[key] as string;
                 }
             }
 
-            foreach (var item in FilesToReplace) {             
+            foreach (var item in FilesToReplace) {
                 string filePath = item.GetMetadata("FullPath");
                 string originalFileText = File.ReadAllText(filePath);
                 string replacedText = originalFileText;
@@ -52,6 +52,7 @@
 
 
             this.UpdatedFiles = updatedFileList.ToArray();
+
             return Success;
         }
     }

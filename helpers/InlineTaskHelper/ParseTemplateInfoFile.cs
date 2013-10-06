@@ -58,14 +58,33 @@
                                  )
                              }).Single();
 
+                // we have to prefix include and exclude with $(_TemplateDir)               
+                //if (result.Include != null) {
+                //    string[] includeParts = result.Include.Split(';');
+                //    StringBuilder includeBuilder = new StringBuilder();
+                //    foreach (var str in includeParts) {
+                //        includeBuilder.AppendFormat("{0}{1};", @"$(_TemplateDir)", str);
+                //    }
+                //    this.Include = includeBuilder.ToString();
+                //}
+
+                //if (result.Exclude != null) {
+                //    string[] excludeParts = result.Exclude.Split(';');
+                //    StringBuilder excludeBuilder = new StringBuilder();
+                //    foreach (var str in excludeParts) {
+                //        excludeBuilder.AppendFormat("{0}{1};", @"$(_TemplateDir)", str);
+                //    }
+                //    this.Exclude = excludeBuilder.ToString();
+                //}
+
                 this.Include = result.Include;
                 this.Exclude = result.Exclude;
+
                 List<ITaskItem> repList = new List<ITaskItem>();
                 
                 foreach(var item in result.Replacements){
                     ITaskItem rep = new TaskItem(ReplacementsItemSpec);
-                    rep.SetMetadata("key",item.Key);
-                    rep.SetMetadata("value",item.Value);
+                    rep.SetMetadata(item.Key, item.Value);
                     repList.Add(rep);
                 }
 

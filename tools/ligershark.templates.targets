@@ -100,19 +100,19 @@
     <!-- Look through Item Templates folder for all .vstemplate files in the project (as Content) -->
     <ItemGroup>
       <!-- Item Templates -->
-      <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate">
+      <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate" Exclude="$(ls-ItemTemplateRoot)**\MyTemplate.vstemplate">
         <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
       
       <!-- Project Template -->
-      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate">
+      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate" Exclude="$(ls-ProjectTemplateRoot)**\MyTemplate.vstemplate">
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
     </ItemGroup>
     
-    <Message Text="Vs Template Files found: @(ls-VsTemplateFiles)" />
+    <Message Text="Vs Template Files found: @(ls-VsTemplateFiles,'%0a%0d')" />
   </Target>
 
   <PropertyGroup>
@@ -121,11 +121,10 @@
       ls-DiscoverItemTemplateFiles;
       ls-InitalizeItemTemplateOutputFolder;
       ls-CalculateItemGroupOutputsForItemTemplates;
-      ls-CopyTemplateFilesToIntermediateFolder;
-      ls-PreprocessTemplates;
+      ls-CopyTemplateFilesToIntermediateFolder;      
     </ls-CreateZipForEachItemTemplateDependsOn>
   </PropertyGroup>
-  
+  <!--ls-PreprocessTemplates;-->
   <PropertyGroup>
     <ls-CopyTemplateFilesToIntermediateFolderDependsOn>
       $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);      
@@ -343,13 +342,6 @@
       <_TemplateDir>%(ls-TemplateInfoFiles.RootDir)%(ls-TemplateInfoFiles.Directory)..\</_TemplateDir>
     </PropertyGroup>
     
-    <ItemGroup>
-      <_FilesToReplace Remove="@(_FilesToReplace)"/>
-      <!-- TODO: There should be a way to either opt in or opt out of replacements -->
-      <_FilesToReplace Include="$(_TemplateDir)**\*"
-                       Exclude="$(_TemplateDir)_Definitions\**\*"/>
-    </ItemGroup>
-
     <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="low"/>
     <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="low"/>
     
@@ -361,11 +353,56 @@
     
     <Message Text="From templateinfo, Include : $(_ls-Include)" Importance="low"/>
     <Message Text="From templateinfo, Exclude : $(_ls-Exclude)" Importance="low"/>
-    <Message Text="From templateinfo, Replacements : @(_ls-Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="low"/>  
+    <Message Text="From templateinfo, Replacements : @(_ls-Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="low"/>
+
+    <ItemGroup>
+      <_FilesToReplace Remove="@(_FilesToReplace)"/>
+      <!--<_FilesToReplace Include="$(_ls-Include)" Exclude="$(_ls-Exclude)"/>-->
+    </ItemGroup>
+
+    <ItemGroup>
+      <!--<_ls-Include-Item Include="$(_ls-Include)"/>-->
+      <_ls-Exclude-Item Include="$(_ls-Exclude)"/>
+    </ItemGroup>
+    <CreateItem Include="$(_ls-Include)">
+      <Output TaskParameter="Include" ItemName="_ls-Include-Item"/>
+    </CreateItem>
+    <!--<CreateItem Include="$(_ls-Exclude)">
+      <Output TaskParameter="Include" ItemName="_ls-Exclude-Item"/>
+    </CreateItem>-->
+    <PropertyGroup>
+      <_temp-include-spec>@(_ls-Include-Item->'$(_TemplateDir)%(Identity)')</_temp-include-spec>
+      <_temp-exclude-spec>@(_ls-Exclude-Item->'$(_TemplateDir)%(Identity)')</_temp-exclude-spec>
+    </PropertyGroup>
+
+    <Message Text="Include item spec: $(_temp-include-spec)" Importance="high"/>
+    <Message Text="Exclude item spec: $(_temp-exclude-spec)" Importance="high"/>    
     
+    <!-- Transform this item so that each value is prefixed with $(_TemplateDir)  -->
+    <CreateItem Include="$(_temp-include-spec)"
+                Exclude="$(_temp-exclude-spec)">
+      <Output TaskParameter="Include" ItemName="_FilesToReplace"/>
+    </CreateItem>
+
+
+    <!--<CreateItem Include="$(_ls-Include)" Exclude="$(_ls-Exclude)">
+      <Output TaskParameter="Include" ItemName="_FilesToReplace"/>
+    </CreateItem>-->
+
+
+    <ItemGroup>
+      <!--<_FilesToReplace Remove="@(_FilesToReplace)"/>-->
+      <!-- TODO: There should be a way to either opt in or opt out of replacements -->
+      <!--<_FilesToReplace Include="$(_TemplateDir)**\*"
+                       Exclude="$(_TemplateDir)_Definitions\**\*"/>-->
+    </ItemGroup>
+    
+    <!-- TODO: Update how Replace is implemented
     <ReplaceInFiles FilesToReplace="@(_FilesToReplace)"
                     Replacements="@(_ls-Replacements)" 
                     Condition=" '@(_FilesToReplace)'!='' and '@(_ls-Replacements)'!='' " />
+                    
+    -->
   </Target>
 
   <PropertyGroup>
@@ -475,7 +512,7 @@
       </Code>
     </Task>
   </UsingTask>
-  
+   
   <UsingTask TaskName="ReplaceInfiles" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
       <FilesToReplace ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
@@ -493,23 +530,23 @@
       <Using Namespace="Microsoft.Build.Utilities" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
-          Log.LogMessage("ReplaceInFiles called");
-            if (FilesToReplace == null || FilesToReplace.Length <= 0 || 
-                Replacements == null || Replacements.Length <=0 ) {
+            Success = true;
+            if (FilesToReplace == null || FilesToReplace.Length <= 0 ||
+                Replacements == null || Replacements.Length <= 0) {
                 return Success;
             }
-            
+
             List<Microsoft.Build.Framework.ITaskItem> updatedFileList = new List<Microsoft.Build.Framework.ITaskItem>();
             // build up a dictionary of the replacements to minimize traversing
-            Dictionary<string, string> replacements = new Dictionary<string, string>();            
+            Dictionary<string, string> replacements = new Dictionary<string, string>();
             foreach (var replacement in Replacements) {
                 IDictionary customMetadata = replacement.CloneCustomMetadata();
-                foreach(var key in customMetadata.Keys){
+                foreach (var key in customMetadata.Keys) {
                     replacements[key as string] = customMetadata[key] as string;
                 }
             }
 
-            foreach (var item in FilesToReplace) {             
+            foreach (var item in FilesToReplace) {
                 string filePath = item.GetMetadata("FullPath");
                 string originalFileText = File.ReadAllText(filePath);
                 string replacedText = originalFileText;
@@ -527,7 +564,10 @@
                 }
             }
 
-            this.UpdatedFiles = updatedFileList.ToArray();        
+
+            this.UpdatedFiles = updatedFileList.ToArray();
+
+            return Success;  
         ]]>
       </Code>
     </Task>
@@ -586,8 +626,7 @@
                 
                 foreach(var item in result.Replacements){
                     ITaskItem rep = new TaskItem(ReplacementsItemSpec);
-                    rep.SetMetadata("key",item.Key);
-                    rep.SetMetadata("value",item.Value);
+                    rep.SetMetadata(item.Key, item.Value);
                     repList.Add(rep);
                 }
 
