@@ -319,7 +319,7 @@
   <Target Name="ls-PreprocessDiscoverTempInfoFiles">
     <Message Text="Looking for templateinfo.xml files under [$(ls-ItemTemplateOutputRoot)]" Importance="low"/>
         <ItemGroup>
-          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\__preprocess.xml" />
+          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\_preprocess.xml" />
         </ItemGroup>
 
         <Message Text="ls-TemplateInfoFiles: @(ls-TemplateInfoFiles)"/>        

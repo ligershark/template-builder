@@ -34,55 +34,6 @@
                 replacer.ReplaceInFiles(rootDirFullPath, templateInfo.Include, templateInfo.Exclude, templateInfo.Replacements, logger);
                 Log.LogMessage(logger.ToString());
 
-                // search for all include files
-                //List<string> pathsToInclude = new List<string>();
-                //List<string> pathsToExclude = new List<string>();
-
-                //if (!string.IsNullOrEmpty(templateInfo.Include)) {
-                //    string[] includeParts = templateInfo.Include.Split(';');
-                //    foreach (string include in includeParts) {
-                //        var results = ReplaceInFiles.Search(rootDirFullPath, include);
-                //        foreach (var result in results) {
-                //            if (!pathsToInclude.Contains(result)) {
-                //                pathsToInclude.Add(result);
-                //            }
-                //        }
-                //    }
-                //}
-
-                //if (!string.IsNullOrEmpty(templateInfo.Exclude)) {
-                //    string[] excludeParts = templateInfo.Exclude.Split(';');
-                //    foreach (string exclude in excludeParts) {
-                //        var results = ReplaceInFiles.Search(rootDirFullPath, exclude);
-                //        foreach (var result in results) {
-                //            if (!pathsToExclude.Contains(result)) {
-                //                pathsToExclude.Add(result);
-                //            }
-                //        }
-                //    }
-                //}
-
-                //int numFilesExcluded = pathsToInclude.RemoveAll(p => pathsToExclude.Contains(p));
-                //Log.LogMessage("Number of files excluded based on pattern: [{0}]", numFilesExcluded);
-
-                //foreach (string file in pathsToInclude) {
-                //    string fileFullPath = Path.GetFullPath(file);
-
-                //    string originalFileText = File.ReadAllText(fileFullPath);
-                //    string replacedText = originalFileText;
-
-                //    foreach (string key in templateInfo.Replacements.Keys) {
-                //        replacedText = Regex.Replace(replacedText, key, templateInfo.Replacements[key]);
-                //    }
-
-                //    if (!originalFileText.Equals(replacedText)) {
-                //        Log.LogMessage("Updating text after replacements in file [{0}]", fileFullPath);
-                //        File.WriteAllText(fileFullPath, replacedText);
-                //    }
-                //    else {
-                //        Log.LogMessage("Not writing out file because no replacments detected [{0}]", fileFullPath);
-                //    }
-                //}
             }
             catch (Exception ex) {
                 Log.LogError(ex.ToString());
