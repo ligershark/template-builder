@@ -47,6 +47,9 @@
     <Compile Include="ParseTemplateInfoFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReplaceInFileOld.cs" />
+    <Compile Include="ReplaceInFiles.cs" />
+    <Compile Include="Replacer.cs" />
+    <Compile Include="TemplateInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="samples\replace01.csproj" />

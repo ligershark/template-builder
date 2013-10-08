@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="CreateNugetPackage">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="FullBuild">
 
   <!-- 
   You can use this scrip to:
@@ -6,8 +6,7 @@
     
     #1: msbuild.exe build.proj
   -->
-  
-
+ 
   <PropertyGroup>
     <SourceRoot Condition=" '$(SourceRoot)'=='' ">$(MSBuildProjectDirectory)\</SourceRoot>
     <OutputRootNoTrailingSlash Condition=" '$(OutputRoot)'=='' ">$(SourceRoot)OutputRoot</OutputRootNoTrailingSlash>
@@ -20,6 +19,7 @@
     <DevFolder Condition=" '$(DevFolder)'=='' ">c:\temp\msbuild\</DevFolder>
     <RestorePackages Condition=" '$(RestorePackages)'=='' ">true</RestorePackages>
     <NuspecFile Condition=" '$(NuspecFile)'=='' ">$(SourceRoot)template-builder.nuspec</NuspecFile>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)'==''">11.0</VisualStudioVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,6 +30,7 @@
     <!-- This item should never have more than 1 value -->
     <_NugetSpecFile Include="$(NuspecFile)" />
     <ToolsItems Include="$(SourceRoot)tools\**\*" />
+    <ToolsItems Include="$(OutputRoot)LigerShark.TemplateBuilder.Tasks.dll" />
     <!-- <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\ligershark.vstemplates.targets" /> 
     <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\Lib\**\*" /> -->
 
@@ -39,11 +40,12 @@
 
     <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
 
-    <!-- <ProjectsToBuild Include="$(SourceRoot)TemplatePack.sln" /> -->
+    <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" /> 
   </ItemGroup>
 
   <PropertyGroup>
     <FullBuildDependsOn>
+      CleanAndInitalize;
       BuildProjects;
       CreateNugetPackage;
     </FullBuildDependsOn>
@@ -51,10 +53,11 @@
       CoreBuildProjects;
     </BuildProjectsDependsOn>
   </PropertyGroup>
-
+  <Target Name="FullBuild" DependsOnTargets="$(FullBuildDependsOn)"/>
   <Target Name="BuildProjects" DependsOnTargets="$(BuildProjectsDependsOn)"/>
   <Target Name="CoreBuildProjects">
-    <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);OutputPath=$(OutputRoot)"/>
+    <Message Text="Building projects [@(ProjectsToBuild)]" Importance="high"/>
+    <MSBuild Projects="@(ProjectsToBuild)" Properties="VisualStudioVersion=$(VisualStudioVersion);Configuration=$(Configuration);OutputPath=$(OutputRoot)"/>
   </Target>
   
   <PropertyGroup>

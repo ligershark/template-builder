@@ -12,6 +12,7 @@
     Constants 
     -->
     <ls-BuildRoot Condition=" '$(ls-BuildRoot)'=='' ">$(MSBuildProjectDirectory)\Build\</ls-BuildRoot>
+    <ls-TasksRoot Condition=" '$(ls-TasksRoot)'==''">$(MSBuildThisFileDirectory)</ls-TasksRoot>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
     
@@ -39,7 +40,7 @@
     <ls-MSBuildLibPathLocal Condition=" '$(ls-MSBuildLibPathLocal)'=='' ">$(LocalAppData)\Microsoft\MSBuild\TemplateBuilder\v1.0.0.0\</ls-MSBuildLibPathLocal>
     <ls-MSBuildLibPath Condition=" '$(ls-MSBuildLibPath)'=='' ">$(MSBuildThisFileDirectory)</ls-MSBuildLibPath>
   </PropertyGroup>
-
+  
   <PropertyGroup>
     <ls-UseHardLinksForItemTemplatesCopy Condition=" '$(ls-UseHardLinksForItemTemplatesCopy)'=='' ">false</ls-UseHardLinksForItemTemplatesCopy>
   </PropertyGroup>
@@ -121,10 +122,11 @@
       ls-DiscoverItemTemplateFiles;
       ls-InitalizeItemTemplateOutputFolder;
       ls-CalculateItemGroupOutputsForItemTemplates;
-      ls-CopyTemplateFilesToIntermediateFolder;      
+      ls-CopyTemplateFilesToIntermediateFolder;
+      ls-PreprocessTemplates;
     </ls-CreateZipForEachItemTemplateDependsOn>
   </PropertyGroup>
-  <!--ls-PreprocessTemplates;-->
+
   <PropertyGroup>
     <ls-CopyTemplateFilesToIntermediateFolderDependsOn>
       $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);      
@@ -342,67 +344,18 @@
       <_TemplateDir>%(ls-TemplateInfoFiles.RootDir)%(ls-TemplateInfoFiles.Directory)..\</_TemplateDir>
     </PropertyGroup>
     
-    <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="low"/>
-    <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="low"/>
+    <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="high"/>
+    <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="high"/>
     
     <ParseTemplateInfoFile FilePath="$(_TemplateInfoPath)" Condition=" '$(_TemplateInfoPath)'!='' ">
       <Output TaskParameter="Include" PropertyName="_ls-Include"/>
       <Output TaskParameter="Exclude" PropertyName="_ls-Exclude"/>
       <Output TaskParameter="Replacements" ItemName="_ls-Replacements"/>
     </ParseTemplateInfoFile>
-    
-    <Message Text="From templateinfo, Include : $(_ls-Include)" Importance="low"/>
-    <Message Text="From templateinfo, Exclude : $(_ls-Exclude)" Importance="low"/>
-    <Message Text="From templateinfo, Replacements : @(_ls-Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="low"/>
 
-    <ItemGroup>
-      <_FilesToReplace Remove="@(_FilesToReplace)"/>
-      <!--<_FilesToReplace Include="$(_ls-Include)" Exclude="$(_ls-Exclude)"/>-->
-    </ItemGroup>
-
-    <ItemGroup>
-      <!--<_ls-Include-Item Include="$(_ls-Include)"/>-->
-      <_ls-Exclude-Item Include="$(_ls-Exclude)"/>
-    </ItemGroup>
-    <CreateItem Include="$(_ls-Include)">
-      <Output TaskParameter="Include" ItemName="_ls-Include-Item"/>
-    </CreateItem>
-    <!--<CreateItem Include="$(_ls-Exclude)">
-      <Output TaskParameter="Include" ItemName="_ls-Exclude-Item"/>
-    </CreateItem>-->
-    <PropertyGroup>
-      <_temp-include-spec>@(_ls-Include-Item->'$(_TemplateDir)%(Identity)')</_temp-include-spec>
-      <_temp-exclude-spec>@(_ls-Exclude-Item->'$(_TemplateDir)%(Identity)')</_temp-exclude-spec>
-    </PropertyGroup>
-
-    <Message Text="Include item spec: $(_temp-include-spec)" Importance="high"/>
-    <Message Text="Exclude item spec: $(_temp-exclude-spec)" Importance="high"/>    
-    
-    <!-- Transform this item so that each value is prefixed with $(_TemplateDir)  -->
-    <CreateItem Include="$(_temp-include-spec)"
-                Exclude="$(_temp-exclude-spec)">
-      <Output TaskParameter="Include" ItemName="_FilesToReplace"/>
-    </CreateItem>
-
-
-    <!--<CreateItem Include="$(_ls-Include)" Exclude="$(_ls-Exclude)">
-      <Output TaskParameter="Include" ItemName="_FilesToReplace"/>
-    </CreateItem>-->
-
-
-    <ItemGroup>
-      <!--<_FilesToReplace Remove="@(_FilesToReplace)"/>-->
-      <!-- TODO: There should be a way to either opt in or opt out of replacements -->
-      <!--<_FilesToReplace Include="$(_TemplateDir)**\*"
-                       Exclude="$(_TemplateDir)_Definitions\**\*"/>-->
-    </ItemGroup>
-    
-    <!-- TODO: Update how Replace is implemented
-    <ReplaceInFiles FilesToReplace="@(_FilesToReplace)"
-                    Replacements="@(_ls-Replacements)" 
-                    Condition=" '@(_FilesToReplace)'!='' and '@(_ls-Replacements)'!='' " />
-                    
-    -->
+    <ReplaceInFiles
+      RootDirectory="$(_TemplateDir)"
+      TemplateInfoFile="$(_TemplateInfoPath)"/>
   </Target>
 
   <PropertyGroup>
@@ -512,66 +465,8 @@
       </Code>
     </Task>
   </UsingTask>
-   
-  <UsingTask TaskName="ReplaceInfiles" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
-    <ParameterGroup>
-      <FilesToReplace ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
-      <Replacements ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
-
-      <!-- Outputs -->
-      <UpdatedFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true"/>
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core" />
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Net" />
-      <Using Namespace="Microsoft.Build.Framework" />
-      <Using Namespace="Microsoft.Build.Utilities" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            Success = true;
-            if (FilesToReplace == null || FilesToReplace.Length <= 0 ||
-                Replacements == null || Replacements.Length <= 0) {
-                return Success;
-            }
-
-            List<Microsoft.Build.Framework.ITaskItem> updatedFileList = new List<Microsoft.Build.Framework.ITaskItem>();
-            // build up a dictionary of the replacements to minimize traversing
-            Dictionary<string, string> replacements = new Dictionary<string, string>();
-            foreach (var replacement in Replacements) {
-                IDictionary customMetadata = replacement.CloneCustomMetadata();
-                foreach (var key in customMetadata.Keys) {
-                    replacements[key as string] = customMetadata[key] as string;
-                }
-            }
-
-            foreach (var item in FilesToReplace) {
-                string filePath = item.GetMetadata("FullPath");
-                string originalFileText = File.ReadAllText(filePath);
-                string replacedText = originalFileText;
-
-                foreach (string key in replacements.Keys) {
-                    replacedText = System.Text.RegularExpressions.Regex.Replace(replacedText, key, replacements[key]);
-                }
-
-                if (!originalFileText.Equals(replacedText)) {
-                    Log.LogMessage("Updating text after replacements in file [{0}]", filePath);
-                    File.WriteAllText(filePath, replacedText);
-                }
-                else {
-                    Log.LogMessage("Not writing out file because no replacments detected [{0}]", filePath);
-                }
-            }
-
-
-            this.UpdatedFiles = updatedFileList.ToArray();
-
-            return Success;  
-        ]]>
-      </Code>
-    </Task>
-  </UsingTask>
+  
+  <UsingTask TaskName="ReplaceInFiles" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
 
   <UsingTask TaskName="ParseTemplateInfoFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
