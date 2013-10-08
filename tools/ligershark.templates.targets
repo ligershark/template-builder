@@ -319,7 +319,7 @@
   <Target Name="ls-PreprocessDiscoverTempInfoFiles">
     <Message Text="Looking for templateinfo.xml files under [$(ls-ItemTemplateOutputRoot)]" Importance="low"/>
         <ItemGroup>
-          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\templateinfo.xml" />
+          <ls-TemplateInfoFiles Include="$(ls-ItemTemplateOutputRoot)**\__preprocess.xml" />
         </ItemGroup>
 
         <Message Text="ls-TemplateInfoFiles: @(ls-TemplateInfoFiles)"/>        
@@ -346,12 +346,6 @@
     
     <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="high"/>
     <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="high"/>
-    
-    <ParseTemplateInfoFile FilePath="$(_TemplateInfoPath)" Condition=" '$(_TemplateInfoPath)'!='' ">
-      <Output TaskParameter="Include" PropertyName="_ls-Include"/>
-      <Output TaskParameter="Exclude" PropertyName="_ls-Exclude"/>
-      <Output TaskParameter="Replacements" ItemName="_ls-Replacements"/>
-    </ParseTemplateInfoFile>
 
     <ReplaceInFiles
       RootDirectory="$(_TemplateDir)"
