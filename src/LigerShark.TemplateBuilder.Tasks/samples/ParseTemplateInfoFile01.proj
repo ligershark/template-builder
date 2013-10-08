@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" DefaultTargets="Demo" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\InlineTaskHelper.dll</TasksAssemblyPath>
+    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\LigerShark.TemplateBuilder.Tasks.dll</TasksAssemblyPath>
     <TempFolder Condition=" ''=='' ">$(MSBuildThisFileDirectory)..\obj\Debug\ReplaceInFiles\</TempFolder>
   </PropertyGroup>
   

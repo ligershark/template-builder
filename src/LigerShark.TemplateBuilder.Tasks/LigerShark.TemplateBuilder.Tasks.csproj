@@ -7,8 +7,8 @@
     <ProjectGuid>{6C8A0DBB-97DC-421A-8717-DCCBFB8EB39F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>InlineTaskHelper</RootNamespace>
-    <AssemblyName>InlineTaskHelper</AssemblyName>
+    <RootNamespace>LigerShark.TemplateBuilder.Tasks</RootNamespace>
+    <AssemblyName>LigerShark.TemplateBuilder.Tasks</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -46,7 +46,9 @@
     <Compile Include="GetItemTemplateNameFromVSTemplatePath.cs" />
     <Compile Include="ParseTemplateInfoFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReplaceInFile.cs" />
+    <Compile Include="ReplaceInFiles.cs" />
+    <Compile Include="Replacer.cs" />
+    <Compile Include="TemplateInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="samples\replace01.csproj" />
