@@ -47,17 +47,20 @@
 
             foreach (string file in pathsToInclude) {
                 string fileFullPath = Path.GetFullPath(file);
+                bool modified = false;
 
-                string originalFileText = File.ReadAllText(fileFullPath);
-                string replacedText = originalFileText;
+                using (var fileStream = File.Open(fileFullPath, FileMode.Open, FileAccess.ReadWrite)) {
+                    using (var replacer = new TokenReplacer(fileStream)) {
+                        foreach (string key in replacements.Keys) {
+                            modified |= replacer.Replace(key, replacements[key]);
+                        }
+                    }
 
-                foreach (string key in replacements.Keys) {
-                    replacedText = Regex.Replace(replacedText, key, replacements[key]);
+                    fileStream.Flush();
                 }
 
-                if (!originalFileText.Equals(replacedText)) {
+                if (modified) {
                     LogMessageLine(logger,"Updating text after replacements in file [{0}]", fileFullPath);
-                    File.WriteAllText(fileFullPath, replacedText);
                 }
                 else {
                     LogMessageLine(logger,"Not writing out file because no replacments detected [{0}]", fileFullPath);
