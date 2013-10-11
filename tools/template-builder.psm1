@@ -152,11 +152,12 @@ function UpdateVsixManifest(){
     }
 
     foreach($vsixManifestFile in $vsixManifestFiles){
-        AddAssetTagToVisxManfiestIfNotExists -vsixFilePathToUpdate $vsixManifestFile
+        AddItemTemplateAssetTagToVisxManfiestIfNotExists -vsixFilePathToUpdate $vsixManifestFile
+        AddProjectTemplateAssetTagToVisxManfiestIfNotExists -vsixFilePathToUpdate $vsixManifestFile
     }
 }
 
-function AddAssetTagToVisxManfiestIfNotExists(){
+function AddItemTemplateAssetTagToVisxManfiestIfNotExists(){
     param(
         [Parameter(Mandatory=$true)]
         $vsixFilePathToUpdate
@@ -173,12 +174,39 @@ function AddAssetTagToVisxManfiestIfNotExists(){
         "`t.vsixmanifest not modified because the 'Output\ItemTemplates' element is already in that file" | Write-Host
     }
     else{
-        "`tAdding asset tag to .vsixmanifest file {0}" -f $vsixFilePathToUpdate | Write-Host
+        "`tAdding item template asset tag to .vsixmanifest file {0}" -f $vsixFilePathToUpdate | Write-Host
         CheckoutIfUnderScc -filePath $vsixFilePathToUpdate
         # create the element here
         $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
         $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ItemTemplate')
         $newElement.SetAttribute('Path', 'Output\ItemTemplates')
+        $vsixXml.PackageManifest.Assets.AppendChild($newElement)
+        $vsixXml.Save($vsixFilePathToUpdate)
+    }
+}
+function AddProjectTemplateAssetTagToVisxManfiestIfNotExists(){
+    param(
+        [Parameter(Mandatory=$true)]
+        $vsixFilePathToUpdate
+    )
+    
+    if(!(Test-Path $vsixFilePathToUpdate)){
+        ".vsixmanifest file not found at [{0}]" -f $vsixFilePathToUpdate | Write-Error
+        return;
+    }
+    
+    [xml]$vsixXml = (Get-Content $vsixFilePathToUpdate)
+    if( ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ProjectTemplates'}) ){
+        # if the asset is already there just skip it
+        "`t.vsixmanifest not modified because the 'Output\ProjectTemplates' element is already in that file" | Write-Host
+    }
+    else{
+        "`tAdding project template asset tag to .vsixmanifest file {0}" -f $vsixFilePathToUpdate | Write-Host
+        CheckoutIfUnderScc -filePath $vsixFilePathToUpdate
+        # create the element here
+        $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
+        $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ProjectTemplate')
+        $newElement.SetAttribute('Path', 'Output\ProjectTemplates')
         $vsixXml.PackageManifest.Assets.AppendChild($newElement)
         $vsixXml.Save($vsixFilePathToUpdate)
     }

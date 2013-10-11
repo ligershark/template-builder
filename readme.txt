@@ -5,4 +5,5 @@ The following snippet should have been added to your .vsixmanifest file
 
   <Assets>
     <Asset Type="Microsoft.VisualStudio.ItemTemplate" Path="Output\ItemTemplates"/>
+	<Asset Type="Microsoft.VisualStudio.ProjectTemplate" Path="Output\ProjectTemplates" />
   </Assets>
