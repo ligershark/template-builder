@@ -44,10 +44,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GetItemTemplateNameFromVSTemplatePath.cs" />
+    <Compile Include="IReplacer.cs" />
     <Compile Include="ParseTemplateInfoFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReplaceInFiles.cs" />
     <Compile Include="Replacer.cs" />
+    <Compile Include="RobustReplacer.cs" />
     <Compile Include="TemplateInfo.cs" />
     <Compile Include="TokenReplacer.cs" />
   </ItemGroup>

@@ -6,9 +6,9 @@
     using System.Text;
     using System.Text.RegularExpressions;
 
-    public class Replacer : IReplacer {
+    public class RobustReplacer : IReplacer {
 
-        public void ReplaceInFiles(string rootDir, string include, string exclude, IDictionary<string, string> replacements, StringBuilder logger = null) {
+        public void ReplaceInFiles(string rootDir, string include,string exclude,IDictionary<string,string>replacements,StringBuilder logger = null) {
             if (string.IsNullOrEmpty(rootDir)) { throw new ArgumentNullException("rootDir"); }
             if (!Directory.Exists(rootDir)) { throw new ArgumentException(string.Format("rootDir doesn't exist at [{0}]", rootDir)); }
 
@@ -21,7 +21,7 @@
             if (!string.IsNullOrEmpty(include)) {
                 string[] includeParts = include.Split(';');
                 foreach (string includeStr in includeParts) {
-                    var results = Replacer.Search(rootDirFullPath, includeStr);
+                    var results = RobustReplacer.Search(rootDirFullPath, includeStr);
                     foreach (var result in results) {
                         if (!pathsToInclude.Contains(result)) {
                             pathsToInclude.Add(result);
@@ -33,7 +33,7 @@
             if (!string.IsNullOrEmpty(exclude)) {
                 string[] excludeParts = exclude.Split(';');
                 foreach (string excludeStr in excludeParts) {
-                    var results = Replacer.Search(rootDirFullPath, excludeStr);
+                    var results = RobustReplacer.Search(rootDirFullPath, excludeStr);
                     foreach (var result in results) {
                         if (!pathsToExclude.Contains(result)) {
                             pathsToExclude.Add(result);
@@ -43,31 +43,34 @@
             }
 
             int numFilesExcluded = pathsToInclude.RemoveAll(p => pathsToExclude.Contains(p));
-            LogMessageLine(logger, "Number of files excluded based on pattern: [{0}]", numFilesExcluded);
+            LogMessageLine(logger,"Number of files excluded based on pattern: [{0}]", numFilesExcluded);
 
             foreach (string file in pathsToInclude) {
                 string fileFullPath = Path.GetFullPath(file);
+                bool modified = false;
 
-                string originalFileText = File.ReadAllText(fileFullPath);
-                string replacedText = originalFileText;
+                using (var fileStream = File.Open(fileFullPath, FileMode.Open, FileAccess.ReadWrite)) {
+                    using (var replacer = new TokenReplacer(fileStream)) {
+                        foreach (string key in replacements.Keys) {
+                            modified |= replacer.Replace(key, replacements[key]);
+                        }
+                    }
 
-                foreach (string key in replacements.Keys) {
-                    replacedText = Regex.Replace(replacedText, key, replacements[key]);
+                    fileStream.Flush();
                 }
 
-                if (!originalFileText.Equals(replacedText)) {
-                    LogMessageLine(logger, "Updating text after replacements in file [{0}]", fileFullPath);
-                    File.WriteAllText(fileFullPath, replacedText);
+                if (modified) {
+                    LogMessageLine(logger,"Updating text after replacements in file [{0}]", fileFullPath);
                 }
                 else {
-                    LogMessageLine(logger, "Not writing out file because no replacments detected [{0}]", fileFullPath);
+                    LogMessageLine(logger,"Not writing out file because no replacments detected [{0}]", fileFullPath);
                 }
             }
         }
 
         protected void LogMessageLine(StringBuilder strBuilder, string message, params object[] args) {
             if (strBuilder != null) {
-                strBuilder.AppendLine(string.Format("message", args));
+                strBuilder.AppendLine(string.Format(message,args));
             }
         }
         static IEnumerable<string> Search(string root, string searchPattern) {
@@ -82,7 +85,7 @@
                 try {
                     paths = Directory.GetFiles(dir, searchPattern);
                 }
-                catch (Exception ex) { } // swallow
+                catch(Exception ex) { } // swallow
 
                 if (paths != null && paths.Length > 0) {
                     foreach (string file in paths) {
@@ -95,7 +98,7 @@
                 try {
                     paths = Directory.GetDirectories(dir);
                 }
-                catch (Exception ex) { } // swallow
+                catch(Exception ex) { } // swallow
 
                 if (paths != null && paths.Length > 0) {
                     foreach (string subDir in paths) {
