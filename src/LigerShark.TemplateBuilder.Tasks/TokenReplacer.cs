@@ -239,6 +239,10 @@ namespace LigerShark.TemplateBuilder.Tasks
                         bufferPosition = 0;
                         realBufferLength = _source.Read(data, 0, data.Length);
                     }
+                    else
+                    {
+                        bufferPosition = realBufferLength = 0;
+                    }
                 }
 
                 if (bytesWrittenToScratchSinceLastFlush > bufferSize)
@@ -267,6 +271,12 @@ namespace LigerShark.TemplateBuilder.Tasks
 
         public bool Replace(string token, string replacement)
         {
+            if (token == replacement)
+            {
+                return false;
+            }
+
+            Console.WriteLine("Replacing {0} with {1}...", token, replacement);
             var encoding = DetectEncoding(_source);
 
             //Get byte runs for token and replacement
