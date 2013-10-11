@@ -344,12 +344,16 @@
       <_TemplateDir>%(ls-TemplateInfoFiles.RootDir)%(ls-TemplateInfoFiles.Directory)..\</_TemplateDir>
     </PropertyGroup>
     
-    <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="high"/>
-    <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="high"/>
+    <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="low"/>
+    <Message Text="_TemplateDir: [$(_TemplateDir)]" Importance="low"/>
 
     <ReplaceInFiles
       RootDirectory="$(_TemplateDir)"
-      TemplateInfoFile="$(_TemplateInfoPath)"/>
+      TemplateInfoFile="$(_TemplateInfoPath)"
+      Condition="Exists('$(_TemplateInfoPath)')" />
+    
+    <Message Text="Skipping ReplaceInFiles because no _preprocess.xml files were found" 
+             Condition="!Exists('$(_TemplateInfoPath)')"/>
   </Target>
 
   <PropertyGroup>
