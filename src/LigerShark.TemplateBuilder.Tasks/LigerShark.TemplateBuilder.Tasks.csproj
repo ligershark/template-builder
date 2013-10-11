@@ -49,6 +49,7 @@
     <Compile Include="ReplaceInFiles.cs" />
     <Compile Include="Replacer.cs" />
     <Compile Include="TemplateInfo.cs" />
+    <Compile Include="TokenReplacer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="samples\replace01.csproj" />
