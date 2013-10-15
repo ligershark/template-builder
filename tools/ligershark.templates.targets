@@ -341,7 +341,7 @@
 
     <PropertyGroup>
       <_TemplateInfoPath>%(ls-TemplateInfoFiles.FullPath)</_TemplateInfoPath>
-      <_TemplateDir>%(ls-TemplateInfoFiles.RootDir)%(ls-TemplateInfoFiles.Directory)..\</_TemplateDir>
+      <_TemplateDir>%(ls-TemplateInfoFiles.RootDir)%(ls-TemplateInfoFiles.Directory)</_TemplateDir>
     </PropertyGroup>
     
     <Message Text="_TemplateInfoPath: [$(_TemplateInfoPath)]" Importance="low"/>
