@@ -112,6 +112,16 @@
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
     </ItemGroup>
+
+    <ItemGroup Condition=" '$(Configuration)'=='Release' " >
+      <!-- If we are not building on release mode let's remove any item starting with _Sample -->
+      <ls-IT-ToRemove Include="$(ls-ItemTemplateRoot)**\_Sample*\_Definitions\*.vstemplate" />
+      <ls-PT-ToRemove Include="$(ls-ProjectTemplateRoot)**\_Sample*\_Definitions\*.vstemplate" />
+      <ls-VsTemplateFiles Remove="@(ls-IT-ToRemove);@(ls-PT-ToRemove)" />
+    </ItemGroup>
+    <Message Text="Removed the following Sample templates from the VSIX because build is set to [$(Configuration)]. 
+Item Templates: @(ls-IT-ToRemove)
+Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
     
     <Message Text="Vs Template Files found: @(ls-VsTemplateFiles,'%0a%0d')" />
   </Target>
