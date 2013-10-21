@@ -33,7 +33,9 @@
     <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
     <!-- This is where all the Project Template .zip files will be located -->
     <ls-ProjectTemplateZipRootFolder Condition=" '$(ls-ProjectTemplateZipRootFolder)'=='' ">Output\ProjectTemplates\</ls-ProjectTemplateZipRootFolder>
-           
+
+    <ls-SnippetFolderRoot Condition=" '$(ls-SnippetFolderRoot)'=='' ">$(MSBuildProjectDirectory)\Snippets\</ls-SnippetFolderRoot>
+    
     <!-- This is normally defined by the .props file imported above ( $(MSBuildProjectDirectory)\Properties\template-builder.props )-->
     <ls-TemplateSubFolder Condition=" '$(ls-TemplateSubFolder)'=='' ">Custom Templates</ls-TemplateSubFolder>
     
@@ -67,6 +69,7 @@
     <CoreCompileDependsOn Condition=" '$(ls-ItemTemplatesExtendBuild)'=='true' ">
       CopyMSBuildFilesToLocalAppData;
       RemoveTemplateFilesFromCompile;
+      IncludeSnippetFilesInVsix;
       $(CoreCompileDependsOn);
       ls-ProcessItemTemplates;
     </CoreCompileDependsOn>
@@ -385,6 +388,36 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
     </ItemGroup>
     <Delete Files="@(_TemplateBuilderFiles)" Condition=" '$(ls-ItemTemplateOutputRoot)'!='' "/>
     <RemoveDir Directories="$(ls-ItemTemplateOutputRoot)"/>
+  </Target>
+  <!--************************************************************************************
+      Snippet support
+  ************************************************************************************-->
+  <Target Name="IncludeSnippetFilesInVsix">
+    <Message Text="Ensuring .snippet files are marked as content and included in the .vsix"/>
+    <!-- 
+    We need to remove .snippet files from Content/None/Resource/EmbeddedResource
+    Then add the files to Content with the following metadata set:
+      <IncludeInVSIX>true</IncludeInVSIX>
+    -->
+
+    <FindUnderPath Files="@(Content);@(None);@(Resource);@(EmbeddedResource)" Path="$(ls-SnippetFolderRoot)">
+      <Output TaskParameter="InPath" ItemName="_ls-Snippet-Files"/>
+    </FindUnderPath>
+    
+    <ItemGroup>
+      <Content Remove="@(_ls-Snippet-Files)"/>
+      <None Remove="@(_ls-Snippet-Files)"/>
+      <Resource Remove="@(_ls-Snippet-Files)"/>
+      <EmbeddedResource Remove="@(_ls-Snippet-Files)"/>
+    </ItemGroup>
+
+    <Message Text="Adding the following .snippet files: [@(_ls-Snippet-Files)]" Importance="high"/>
+    
+    <ItemGroup>
+      <Content Include="@(_ls-Snippet-Files)">
+        <IncludeInVSIX>true</IncludeInVSIX>
+      </Content>
+    </ItemGroup>    
   </Target>
 
   <!--************************************************************************************
