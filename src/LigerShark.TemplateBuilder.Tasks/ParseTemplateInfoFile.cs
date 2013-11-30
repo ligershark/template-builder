@@ -58,25 +58,6 @@
                                  )
                              }).Single();
 
-                // we have to prefix include and exclude with $(_TemplateDir)               
-                //if (result.Include != null) {
-                //    string[] includeParts = result.Include.Split(';');
-                //    StringBuilder includeBuilder = new StringBuilder();
-                //    foreach (var str in includeParts) {
-                //        includeBuilder.AppendFormat("{0}{1};", @"$(_TemplateDir)", str);
-                //    }
-                //    this.Include = includeBuilder.ToString();
-                //}
-
-                //if (result.Exclude != null) {
-                //    string[] excludeParts = result.Exclude.Split(';');
-                //    StringBuilder excludeBuilder = new StringBuilder();
-                //    foreach (var str in excludeParts) {
-                //        excludeBuilder.AppendFormat("{0}{1};", @"$(_TemplateDir)", str);
-                //    }
-                //    this.Exclude = excludeBuilder.ToString();
-                //}
-
                 this.Include = result.Include;
                 this.Exclude = result.Exclude;
 
