@@ -74,6 +74,7 @@
                 //  'Web.CSharp.vstemplate' -> CSharp\Web\
                 //  'VB.vstemplate' -> VisualBasic\
                 //  'Web.VB.vstemplate' -> VisualBasic\Web\
+                //  'fsharp.vstemplate' -> FSharp\
                 if (string.Compare(@"CSharp.vstemplate", fi.Name, StringComparison.OrdinalIgnoreCase) == 0) {
                     ItemTemplateName = string.Format("{0}.csharp", itRootFileName);
                     OutputPathFolder = string.Format(@"{0}CSharp\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);
@@ -93,6 +94,11 @@
 
                     // web site templates do not support any nesting
                     OutputPathFolder = string.Format(@"{0}VisualBasic\Web\{1}", ItemTemplateZipRootFolder, subFolder);
+                }
+                else if (string.Compare(@"fsharp.vstemplate", fi.Name, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    ItemTemplateName = string.Format("{0}.fsharp", itRootFileName);
+                    OutputPathFolder = string.Format(@"{0}FSharp\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);
                 }
                 else {
                     Log.LogError("Unknown value for ItemTemplateName: [{0}]. Supported values include 'CSharp.vstemplate','Web.CSharp.vstemplate','VB.vstemplate' and 'Web.VB.vstemplate' ", fi.Name);
