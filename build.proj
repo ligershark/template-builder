@@ -38,9 +38,12 @@
       <DestDir>%(RecursiveDir)</DestDir>
     </ContentItems>
 
+    <LibItems Include="$(OutputRoot)TemplateBuilder.dll"/>
+
     <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
 
-    <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" /> 
+    <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" />
+    <ProjectsToBuild Include="$(SourceRoot)src\TemplateBuilder\TemplateBuilder.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
