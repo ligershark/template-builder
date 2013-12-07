@@ -15,7 +15,7 @@
     <ls-TasksRoot Condition=" '$(ls-TasksRoot)'==''">$(MSBuildThisFileDirectory)</ls-TasksRoot>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
-    
+    <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(IntermediateOutputPath)template-report.txt</ls-TemplateReportPath>
     <!-- 
     Item Templates 
     -->
@@ -72,6 +72,7 @@
       IncludeSnippetFilesInVsix;
       $(CoreCompileDependsOn);
       ls-ProcessItemTemplates;
+      ls-GenerateTemplateReport
     </CoreCompileDependsOn>
   
     <ls-ProcessItemTemplatesDependsOn>
@@ -105,12 +106,14 @@
     <ItemGroup>
       <!-- Item Templates -->
       <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate" Exclude="$(ls-ItemTemplateRoot)**\MyTemplate.vstemplate">
+        <TemplateType>ItemTemplate</TemplateType>
         <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
       
       <!-- Project Template -->
       <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate" Exclude="$(ls-ProjectTemplateRoot)**\MyTemplate.vstemplate">
+        <TemplateType>ProjectTemplate</TemplateType>
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
@@ -276,6 +279,7 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
     
     <ItemGroup>
       <_ls-ItemTemplatesOutputs Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)$(_ls-ItemTemplateName).zip')">
+        <TemplateType>%(ls-VsTemplateFiles.TemplateType)</TemplateType>
         <ItemTemplateName>$(_ls-ItemTemplateName)</ItemTemplateName>
         <VsTemplateSourcePath>%(ls-VsTemplateFiles.Identity)</VsTemplateSourcePath>
         <ItemTemplateFolder>$(_ls-ItemTemplateFolder)</ItemTemplateFolder>
@@ -419,7 +423,54 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
       </Content>
     </ItemGroup>    
   </Target>
+  <PropertyGroup>
+    <ls-GenerateTemplateReportDependsOn>
+      $(ls-GenerateTemplateReportDependsOn);
+      ls-CalculateItemGroupOutputsForItemTemplates;
+      IncludeSnippetFilesInVsix
+    </ls-GenerateTemplateReportDependsOn>
+  </PropertyGroup>
+  <Target Name="ls-GenerateTemplateReport" DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)">
+    <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" Importance="high"/>
+    <!--ls-TemplateReportPath-->
+    <WriteLinesToFile File="$(ls-TemplateReportPath)" 
+                      Lines="Template report"
+                      Overwrite="true" />
 
+    <WriteLinesToFile File="$(ls-TemplateReportPath)"
+                      Lines="
+##########################
+##### Item Templates #####
+##########################"/>
+    <WriteLinesToFile File="$(ls-TemplateReportPath)" 
+                      Lines="%(_ls-ItemTemplatesOutputs.ItemTemplateName)" 
+                      Condition=" '%(_ls-ItemTemplatesOutputs.TemplateType)' =='ItemTemplate' "/>
+
+    <WriteLinesToFile File="$(ls-TemplateReportPath)"
+                  Lines="
+#############################
+##### Project Templates #####
+#############################"/>
+    <WriteLinesToFile File="$(ls-TemplateReportPath)"
+                  Lines="%(_ls-ItemTemplatesOutputs.ItemTemplateName)"
+                  Condition=" '%(_ls-ItemTemplatesOutputs.TemplateType)' =='ProjectTemplate' "/>
+
+
+    <WriteLinesToFile File="$(ls-TemplateReportPath)"
+                  Lines="
+####################
+##### Snippets #####
+####################"/>
+    <WriteLinesToFile File="$(ls-TemplateReportPath)"
+              Lines="%(_ls-Snippet-Files.FileName)"/>
+
+    <ReadLinesFromFile File="$(ls-TemplateReportPath)">
+      <Output ItemName="ls-AllTemplateReportText" TaskParameter="Lines"/>
+    </ReadLinesFromFile>
+    <Message Text="@(ls-AllTemplateReportText->'%(Identity)','%0a%0d')" />
+
+  </Target>
+  
   <!--************************************************************************************
       Tasks defined below
   ************************************************************************************-->
