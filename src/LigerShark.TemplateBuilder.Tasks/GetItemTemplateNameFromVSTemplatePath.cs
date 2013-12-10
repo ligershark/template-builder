@@ -105,7 +105,7 @@
                     return false;
                 }
 
-                OutputPathWithFileName = string.Format(@"{0}{1}", OutputPathFolder, itRootFileName);                 
+                OutputPathWithFileName = string.Format(@"{0}\{1}{2}", OutputPathFolder, itRootFileName,di.Parent.Extension);                 
 
             return Success;
         }

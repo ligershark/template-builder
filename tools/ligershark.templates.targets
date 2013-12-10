@@ -30,7 +30,7 @@
     Project Templates
     -->
     <ls-ProjectTemplateRoot Condition=" '$(ls-ProjectTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ProjectTemplates\</ls-ProjectTemplateRoot>
-    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
+    <!--<ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>-->
     <!-- This is where all the Project Template .zip files will be located -->
     <ls-ProjectTemplateZipRootFolder Condition=" '$(ls-ProjectTemplateZipRootFolder)'=='' ">Output\ProjectTemplates\</ls-ProjectTemplateZipRootFolder>
 
@@ -198,6 +198,10 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
 
+    <ItemGroup>
+      <ls-OutputTemplateFiles Include="$(_ls-IntermediateItemTemplateFolder)%(_ls-ItemTemplatesOutputs.Filename).vstemplate"/>
+    </ItemGroup>
+    
     <Message Text="_ls-ItemTemplatesOutputs.Filename : [%(_ls-ItemTemplatesOutputs.Filename)]" Importance="high"/>
     <Message Text="Zipping the following files for Item Template: @(ls-temp-FilesCopied)" Importance="high"/>
     <Message Text="***: _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" Importance="high"/>
@@ -427,43 +431,16 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
     <ls-GenerateTemplateReportDependsOn>
       $(ls-GenerateTemplateReportDependsOn);
       ls-CalculateItemGroupOutputsForItemTemplates;
+      ls-CopyTemplateFilesToIntermediateFolder;
       IncludeSnippetFilesInVsix
     </ls-GenerateTemplateReportDependsOn>
   </PropertyGroup>
   <Target Name="ls-GenerateTemplateReport" DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)">
     <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" Importance="high"/>
-    <!--ls-TemplateReportPath-->
-    <WriteLinesToFile File="$(ls-TemplateReportPath)" 
-                      Lines="Template report"
-                      Overwrite="true" />
 
-    <WriteLinesToFile File="$(ls-TemplateReportPath)"
-                      Lines="
-##########################
-##### Item Templates #####
-##########################"/>
-    <WriteLinesToFile File="$(ls-TemplateReportPath)" 
-                      Lines="%(_ls-ItemTemplatesOutputs.ItemTemplateName)" 
-                      Condition=" '%(_ls-ItemTemplatesOutputs.TemplateType)' =='ItemTemplate' "/>
-
-    <WriteLinesToFile File="$(ls-TemplateReportPath)"
-                  Lines="
-#############################
-##### Project Templates #####
-#############################"/>
-    <WriteLinesToFile File="$(ls-TemplateReportPath)"
-                  Lines="%(_ls-ItemTemplatesOutputs.ItemTemplateName)"
-                  Condition=" '%(_ls-ItemTemplatesOutputs.TemplateType)' =='ProjectTemplate' "/>
-
-
-    <WriteLinesToFile File="$(ls-TemplateReportPath)"
-                  Lines="
-####################
-##### Snippets #####
-####################"/>
-    <WriteLinesToFile File="$(ls-TemplateReportPath)"
-              Lines="%(_ls-Snippet-Files.FileName)"/>
-
+    <GenerateTemplatePackReport TemplateFiles="@(ls-VsTemplateFiles)"
+                                OutputFile="$(ls-TemplateReportPath)"/>
+    
     <ReadLinesFromFile File="$(ls-TemplateReportPath)">
       <Output ItemName="ls-AllTemplateReportText" TaskParameter="Lines"/>
     </ReadLinesFromFile>
@@ -474,6 +451,7 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
   <!--************************************************************************************
       Tasks defined below
   ************************************************************************************-->
+  <UsingTask TaskName="GenerateTemplatePackReport" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   
   <UsingTask TaskName="ReplaceInFiles" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>

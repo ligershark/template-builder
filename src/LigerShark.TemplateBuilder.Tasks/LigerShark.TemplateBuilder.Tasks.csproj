@@ -43,6 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\ITaskItem.cs" />
+    <Compile Include="Extensions\XElement.cs" />
+    <Compile Include="GenerateTemplatePackReport.cs" />
     <Compile Include="GetItemTemplateNameFromVSTemplatePath.cs" />
     <Compile Include="IReplacer.cs" />
     <Compile Include="ParseTemplateInfoFile.cs" />
@@ -58,6 +61,7 @@
     <Content Include="samples\templateinfo.xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="samples\GenerateTemplatePackReport.proj" />
     <None Include="samples\ParseTemplateInfoFile01.proj">
       <SubType>Designer</SubType>
     </None>

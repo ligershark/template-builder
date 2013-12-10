@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Demo" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\LigerShark.TemplateBuilder.Tasks.dll</TasksAssemblyPath>
+
+    <SamplesFolder Condition=" '$(SamplesFolder)'=='' ">C:\Data\mycode\side-waffle\TemplatePack\obj\Debug\ls-ItemTemplates\</SamplesFolder>
+    <OutputFile Condition=" '$(OutputFile)'=='' ">$(MSBuildThisFileDirectory)gentemplatereport.txt</OutputFile>
+  </PropertyGroup>
+  
+  <UsingTask TaskName="GenerateTemplatePackReport"
+             AssemblyFile="$(TasksAssemblyPath)"/>
+
+  <ItemGroup>
+    <TemplateFiles Include="$(SamplesFolder)_FSharp Samples.fsharp\_FSharp Samples.fsharp.vstemplate"/>
+    <TemplateFiles Include="$(SamplesFolder)Basic .nuspec file.csharp\Basic .nuspec file.csharp.vstemplate"/>
+    <TemplateFiles Include="$(SamplesFolder)BasicTargetsFile.web.VB\BasicTargetsFile.web.VB.vstemplate"/>
+    <TemplateFiles Include="$(SamplesFolder)BasicTargetsFile.web.csharp\BasicTargetsFile.web.csharp.vstemplate"/>
+  </ItemGroup>
+  
+  <Target Name="Demo">
+    <Message Text="Creating template report at [$(OutputFile)]" Importance="high"/>
+
+    <GenerateTemplatePackReport TemplateFiles="@(TemplateFiles)" OutputFile="$(OutputFile)" />
+
+    <Message Text="Include : $(Include)" Importance="high"/>
+    <Message Text="Exclude : $(Exclude)" Importance="high"/>    
+    <Message Text="Replacements : @(Replacements->'%0a%0d        [key=%(Key),Value=%(Value)]')" Importance="high"/>
+    
+  </Target>
+  
+</Project>

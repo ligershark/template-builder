@@ -1,0 +1,4 @@
+CSharp		A basic NuGet .nuspec file	A basic NuGet .nuspec file
+Web	VisualBasic	Basic targets script	A basic MSBuild targets script
+Web	CSharp	Basic targets script	A basic MSBuild targets script
+FSharp		FSharp sample item template	Description here
