@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CreateTemplateTask.cs" />
     <Compile Include="Extensions\ITaskItem.cs" />
     <Compile Include="Extensions\XElement.cs" />
     <Compile Include="GenerateTemplatePackReport.cs" />
