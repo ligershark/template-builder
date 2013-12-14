@@ -30,7 +30,7 @@
     Project Templates
     -->
     <ls-ProjectTemplateRoot Condition=" '$(ls-ProjectTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ProjectTemplates\</ls-ProjectTemplateRoot>
-    <!--<ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>-->
+    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
     <!-- This is where all the Project Template .zip files will be located -->
     <ls-ProjectTemplateZipRootFolder Condition=" '$(ls-ProjectTemplateZipRootFolder)'=='' ">Output\ProjectTemplates\</ls-ProjectTemplateZipRootFolder>
 
@@ -84,7 +84,7 @@
   </PropertyGroup>
 
   <Target Name="RemoveTemplateFilesFromCompile" BeforeTargets="CoreCompile">
-    <Message Text="Removing ItemTemplate and ProjectTemplate files from Compile list"/>
+    <Message Text="Removing ItemTemplate and ProjectTemplate files from Compile list" Importance="high"/>
 
     <!-- Files under ItemTemplates and ProjectTemplates should not be included in the Compile list -->
     <ItemGroup>
@@ -102,6 +102,7 @@
   <Target Name="ls-ProcessItemTemplates" DependsOnTargets="$(ls-ProcessItemTemplatesDependsOn)" />
   
   <Target Name="ls-DiscoverItemTemplateFiles">
+    <Message Text="Looking for item and project templates" Importance="high"/>
     <!-- Look through Item Templates folder for all .vstemplate files in the project (as Content) -->
     <ItemGroup>
       <!-- Item Templates -->
@@ -127,13 +128,14 @@
     </ItemGroup>
     <Message Text="Removed the following Sample templates from the VSIX because build is set to [$(Configuration)]. 
 Item Templates: @(ls-IT-ToRemove)
-Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
+Project Templates: @(ls-PT-ToRemove)"/>
     
     <Message Text="Vs Template Files found: @(ls-VsTemplateFiles,'%0a%0d')" />
   </Target>
 
   <PropertyGroup>
     <ls-CreateZipForEachItemTemplateDependsOn>
+      ls-MessageForCreateZipForEachItemTemplate;
       $(ls-CreateZipForEachItemTemplateDependsOn);
       ls-DiscoverItemTemplateFiles;
       ls-InitalizeItemTemplateOutputFolder;
@@ -145,14 +147,19 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
 
   <PropertyGroup>
     <ls-CopyTemplateFilesToIntermediateFolderDependsOn>
-      $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);      
+      ls-MessageForCopyTemplateFilesToIntermediateFolder;
+      $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);
     </ls-CopyTemplateFilesToIntermediateFolderDependsOn>
   </PropertyGroup>
+  <Target Name="ls-MessageForCopyTemplateFilesToIntermediateFolder">
+    <Message Text="Copying template files to the intermediate folder" Importance="high"/>
+  </Target>
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
   <Target Name="ls-CopyTemplateFilesToIntermediateFolder"
           Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
           Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
           DependsOnTargets="$(ls-CopyTemplateFilesToIntermediateFolderDependsOn)">
+    
     <Message Text="Determining files to incude in Item Template .zip file for [%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)]"/>
 
     <!-- 
@@ -202,20 +209,21 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
       <ls-OutputTemplateFiles Include="$(_ls-IntermediateItemTemplateFolder)%(_ls-ItemTemplatesOutputs.Filename).vstemplate"/>
     </ItemGroup>
     
-    <Message Text="_ls-ItemTemplatesOutputs.Filename : [%(_ls-ItemTemplatesOutputs.Filename)]" Importance="high"/>
-    <Message Text="Zipping the following files for Item Template: @(ls-temp-FilesCopied)" Importance="high"/>
-    <Message Text="***: _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" Importance="high"/>
-    <Message Text="***: _ls-IntermediateItemTemplateFolder:[$(_ls-IntermediateItemTemplateFolder)]" Importance="high" />
-    <Message Text="***: _ls-ItemTemplatesOutputs.Identity:[%(_ls-ItemTemplatesOutputs.Identity)]" Importance="high" />
-    <Message Text="***: _ls-ItemTemplatesOutputs.IntermediateItemTemplateFolder:[%(_ls-ItemTemplatesOutputs.IntermediateItemTemplateFolder)]" Importance="high" />
+    <Message Text="_ls-ItemTemplatesOutputs.Filename : [%(_ls-ItemTemplatesOutputs.Filename)]" Importance="low"/>
+    <Message Text="Zipping the following files for Item Template: @(ls-temp-FilesCopied)" Importance="low"/>
+    <Message Text="***: _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" Importance="low"/>
+    <Message Text="***: _ls-IntermediateItemTemplateFolder:[$(_ls-IntermediateItemTemplateFolder)]" Importance="low" />
+    <Message Text="***: _ls-ItemTemplatesOutputs.Identity:[%(_ls-ItemTemplatesOutputs.Identity)]" Importance="low" />
+    <Message Text="***: _ls-ItemTemplatesOutputs.IntermediateItemTemplateFolder:[%(_ls-ItemTemplatesOutputs.IntermediateItemTemplateFolder)]" Importance="low" />
   </Target>
-
+  <Target Name="ls-MessageForCreateZipForEachItemTemplate">
+    <Message Text="Creating a zip file for each template" Importance="high"/>
+  </Target>
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
   <Target Name="ls-CreateZipForEachItemTemplate"
           Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
           Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
-          DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">
-
+          DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">    
     <PropertyGroup>
       <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(_ls-ItemTemplatesOutputs.ItemTemplateName)\</_ls-IntermediateItemTemplateFolder>
     </PropertyGroup>
@@ -266,8 +274,8 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
       <_ZipRootFolder>%(ls-VsTemplateFiles.ZipRootFolder)</_ZipRootFolder>
     </PropertyGroup>
 
-    <Message Text="_TemplatesRoot:[$(_TemplatesRoot)]" Importance="high"/>
-    <Message Text="_ZipRootFolder:[$(_ZipRootFolder)]" Importance="high"/>
+    <Message Text="_TemplatesRoot:[$(_TemplatesRoot)]" />
+    <Message Text="_ZipRootFolder:[$(_ZipRootFolder)]" />
     
     <!-- ls-ItemTemplateOutputRoot -->
     <GetItemTemplateNameFromVSTemplatePath 
@@ -282,7 +290,9 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
     </GetItemTemplateNameFromVSTemplatePath>
     
     <ItemGroup>
-      <_ls-ItemTemplatesOutputs Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)$(_ls-ItemTemplateName).zip')">
+      <_ls-ItemTemplatesOutputs 
+        Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)$(_ls-ItemTemplateName).zip')"
+        Condition=" %(ls-VsTemplateFiles.TemplateType)=='ItemTemplate' ">
         <TemplateType>%(ls-VsTemplateFiles.TemplateType)</TemplateType>
         <ItemTemplateName>$(_ls-ItemTemplateName)</ItemTemplateName>
         <VsTemplateSourcePath>%(ls-VsTemplateFiles.Identity)</VsTemplateSourcePath>
@@ -293,11 +303,11 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
       </_ls-ItemTemplatesOutputs>
     </ItemGroup>
 
-    <Message Text="_ls-ItemTemplatesOutputs.ItemTemplateName: [%(_ls-ItemTemplatesOutputs.ItemTemplateName)]" Importance="high" />
-    <Message Text="_ls-ItemTemplatesOutputs.Identity: [%(_ls-ItemTemplatesOutputs.Identity)]" Importance="high" />
-    <Message Text="ls-ItemTemplateZipRootFolder: $(ls-ItemTemplateZipRootFolder)" Importance="high" />
-    <Message Text="OutputPathWithFileName:$(OutputPathWithFileName)" Importance="high"/>
-    <Message Text="%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)" Importance="high"/>
+    <Message Text="_ls-ItemTemplatesOutputs.ItemTemplateName: [%(_ls-ItemTemplatesOutputs.ItemTemplateName)]" Importance="low" />
+    <Message Text="_ls-ItemTemplatesOutputs.Identity: [%(_ls-ItemTemplatesOutputs.Identity)]" Importance="low" />
+    <Message Text="ls-ItemTemplateZipRootFolder: $(ls-ItemTemplateZipRootFolder)" Importance="low" />
+    <Message Text="OutputPathWithFileName:$(OutputPathWithFileName)" Importance="low"/>
+    <Message Text="%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)" Importance="low"/>
 
     <Message Text="_ls-ItemTemplatesOutputs.VsTemplateSourcePath: %(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" />
   </Target>
@@ -321,7 +331,7 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
 
     </ItemGroup>
 
-    <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" Importance="high"/>    
+    <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" />    
   </Target>
 
   <!--
@@ -419,7 +429,7 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
       <EmbeddedResource Remove="@(_ls-Snippet-Files)"/>
     </ItemGroup>
 
-    <Message Text="Adding the following .snippet files: [@(_ls-Snippet-Files)]" Importance="high"/>
+    <Message Text="Adding the following .snippet files: [@(_ls-Snippet-Files)]" />
     
     <ItemGroup>
       <Content Include="@(_ls-Snippet-Files)">
@@ -436,7 +446,7 @@ Project Templates: @(ls-PT-ToRemove)" Importance="high"/>
     </ls-GenerateTemplateReportDependsOn>
   </PropertyGroup>
   <Target Name="ls-GenerateTemplateReport" DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)">
-    <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" Importance="high"/>
+    <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" />
 
     <GenerateTemplatePackReport TemplateFiles="@(ls-VsTemplateFiles)"
                                 OutputFile="$(ls-TemplateReportPath)"/>
