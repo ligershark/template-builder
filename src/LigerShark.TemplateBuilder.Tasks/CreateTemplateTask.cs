@@ -7,10 +7,8 @@ using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-namespace LigerShark.TemplateBuilder.Tasks
-{
-    public class CreateTemplateTask : Task
-    {
+namespace LigerShark.TemplateBuilder.Tasks {
+    public class CreateTemplateTask : Task {
         [Required]
         public string ProjectFile { get; set; }
 
@@ -25,16 +23,13 @@ namespace LigerShark.TemplateBuilder.Tasks
 
         private const string MSBuildSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
 
-        public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames)
-        {
-            foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", MSBuildSchema)))
-            {
+        public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
+            foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", MSBuildSchema))) {
                 takenSourceFileNames.Add(projectItem.Value.ToLower());
                 takenTargetFileNames.Add(projectItem.Attribute(XName.Get("TargetFileName")).Value.ToLower());
             }
 
-            foreach (var folder in projectItemContainer.Elements(XName.Get("Folder", MSBuildSchema)))
-            {
+            foreach (var folder in projectItemContainer.Elements(XName.Get("Folder", MSBuildSchema))) {
                 var sourceFolderName = folder.Attribute(XName.Get("Name")).Value.ToLower();
                 var targetFolderName = folder.Attribute(XName.Get("TargetFolderName")).Value.ToLower();
 
@@ -45,18 +40,15 @@ namespace LigerShark.TemplateBuilder.Tasks
             }
         }
 
-        public void RecurseItems(XElement projectItemContainer, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames)
-        {
+        public void RecurseItems(XElement projectItemContainer, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
             RecurseItems(projectItemContainer, null, null, takenSourceFileNames, takenTargetFileNames);
         }
 
-        public override bool Execute()
-        {
+        public override bool Execute() {
             var vstemplate = XDocument.Load(VsTemplateShell);
             var workingTemplate = XDocument.Parse(@"<VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""Project"" />");
 
-            if (vstemplate.Root == null || workingTemplate.Root == null)
-            {
+            if (vstemplate.Root == null || workingTemplate.Root == null) {
                 return false;
             }
 
@@ -67,27 +59,23 @@ namespace LigerShark.TemplateBuilder.Tasks
             var project = new ProjectInstance(ProjectFile);
             var realProjectFile = Path.GetFileName(project.FullPath);
 
-            if (realProjectFile == null)
-            {
+            if (realProjectFile == null) {
                 return false;
             }
 
             var projectExtension = Path.GetExtension(project.FullPath);
 
-            if (projectExtension == null)
-            {
+            if (projectExtension == null) {
                 return false;
             }
 
             var templateContentElement = vstemplate.Root.Element(XName.Get("TemplateContent", MSBuildSchema));
             XElement projectElement = null;
 
-            if (templateContentElement != null)
-            {
+            if (templateContentElement != null) {
                 var element = templateContentElement.Element(XName.Get("Project", MSBuildSchema));
 
-                if (element != null)
-                {
+                if (element != null) {
                     projectElement = XElement.Parse(element.ToString());
                 }
             }
@@ -95,13 +83,11 @@ namespace LigerShark.TemplateBuilder.Tasks
             templateContentElement = new XElement(XName.Get("TemplateContent", MSBuildSchema));
             templateContentElement.Add(projectElement);
 
-            if (projectElement == null)
-            {
+            if (projectElement == null) {
                 projectElement = new XElement(XName.Get("Project", MSBuildSchema));
                 templateContentElement.Add(projectElement);
             }
-            else
-            {
+            else {
                 projectElement.RemoveAttributes();
             }
 
@@ -117,25 +103,21 @@ namespace LigerShark.TemplateBuilder.Tasks
             FilesToCopy = new List<string>();
             var itemsToMerge = new List<string>();
 
-            foreach (var item in project.Items)
-            {
-                if (!IsPotentialSourceFile(item))
-                {
+            foreach (var item in project.Items) {
+                if (!IsPotentialSourceFile(item)) {
                     continue;
                 }
 
                 var name = item.EvaluatedInclude;
                 var lowerName = name.ToLower();
 
-                if (targetFileNames.Contains(lowerName))
-                {
+                if (targetFileNames.Contains(lowerName)) {
                     continue;
                 }
 
                 FilesToCopy.Add(name);
 
-                if (!sourceFileNames.Contains(lowerName))
-                {
+                if (!sourceFileNames.Contains(lowerName)) {
                     itemsToMerge.Add(name);
                 }
             }
@@ -145,21 +127,18 @@ namespace LigerShark.TemplateBuilder.Tasks
             return true;
         }
 
-        private static void MergeTemplateData(XElement target, XElement source, string childName, object defaultValue)
-        {
+        private static void MergeTemplateData(XElement target, XElement source, string childName, object defaultValue) {
             var element = source.Element(XName.Get(childName, MSBuildSchema));
             var value = defaultValue;
 
-            if (element != null)
-            {
+            if (element != null) {
                 value = element.Value;
             }
 
             target.Add(new XElement(XName.Get(childName, MSBuildSchema), value));
         }
 
-        private static void MergeTemplateData(XElement workingTemplate, XElement source)
-        {
+        private static void MergeTemplateData(XElement workingTemplate, XElement source) {
             source = source ?? new XElement("Foo");
 
             MergeTemplateData(workingTemplate, source, "Name", "My Project Template Name");
@@ -175,8 +154,7 @@ namespace LigerShark.TemplateBuilder.Tasks
             MergeTemplateData(workingTemplate, source, "NumberOfParentCategoriesToRollUp", 1);
         }
 
-        private static bool IsPotentialSourceFile(ProjectItemInstance item)
-        {
+        private static bool IsPotentialSourceFile(ProjectItemInstance item) {
             var nonFileTypes = new List<string>
             {
                 "Reference",
@@ -194,20 +172,16 @@ namespace LigerShark.TemplateBuilder.Tasks
             return !item.ItemType.StartsWith("_") && !nonFileTypes.Contains(item.ItemType);
         }
 
-        private static void Merge(XElement rootElement, IEnumerable<string> filesToMerge)
-        {
+        private static void Merge(XElement rootElement, IEnumerable<string> filesToMerge) {
             var splitFiles = filesToMerge.Select(x => x.Split('\\'));
 
-            foreach (var fileParts in splitFiles)
-            {
+            foreach (var fileParts in splitFiles) {
                 var workingElement = rootElement;
 
-                for (var i = 0; i < fileParts.Length - 1; ++i)
-                {
+                for (var i = 0; i < fileParts.Length - 1; ++i) {
                     var newWorkingElement = workingElement.Elements(XName.Get("Folder", MSBuildSchema)).FirstOrDefault(x => string.Equals(x.Attribute(XName.Get("TargetFolderName")).Value, fileParts[i], StringComparison.OrdinalIgnoreCase));
 
-                    if (newWorkingElement == null)
-                    {
+                    if (newWorkingElement == null) {
                         newWorkingElement = new XElement(XName.Get("Folder", MSBuildSchema));
                         newWorkingElement.Add(new XAttribute(XName.Get("Name"), fileParts[i]));
                         newWorkingElement.Add(new XAttribute(XName.Get("TargetFolderName"), fileParts[i]));
