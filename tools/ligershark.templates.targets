@@ -20,7 +20,7 @@
     Item Templates 
     -->
     <ls-ItemTemplateRoot Condition=" '$(ls-ItemTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ItemTemplates\</ls-ItemTemplateRoot>
-    <ls-ItemTemplateOutputRoot Condition=" '$(ls-ItemTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ItemTemplates\</ls-ItemTemplateOutputRoot>
+    <ls-ItemTemplateOutputRoot Condition=" '$(ls-ItemTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-Templates\</ls-ItemTemplateOutputRoot>
     
     <ls-ItemTemplatesExtendBuild Condition=" '$(ls-ItemTemplatesExtendBuild)'=='' ">true</ls-ItemTemplatesExtendBuild>
     <!-- This is where all the Item Template .zip files will be located -->
@@ -178,7 +178,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
     
     <!-- We need to copy the files into a subfolder under obj\ and then create the .zip file from that -->
     <PropertyGroup>
-      <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(_ls-ItemTemplatesOutputs.ItemTemplateName)\</_ls-IntermediateItemTemplateFolder>
+      <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(_ls-ItemTemplatesOutputs.OutputRoot)%(_ls-ItemTemplatesOutputs.ItemTemplateName)\</_ls-IntermediateItemTemplateFolder>
     </PropertyGroup>
 
     <!-- delete the old content and copy it over from the source -->
@@ -225,9 +225,11 @@ Project Templates: @(ls-PT-ToRemove)"/>
           Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
           DependsOnTargets="$(ls-CreateZipForEachItemTemplateDependsOn)">    
     <PropertyGroup>
-      <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(_ls-ItemTemplatesOutputs.ItemTemplateName)\</_ls-IntermediateItemTemplateFolder>
+      <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(_ls-ItemTemplatesOutputs.OutputRoot)%(_ls-ItemTemplatesOutputs.ItemTemplateName)\</_ls-IntermediateItemTemplateFolder>
     </PropertyGroup>
 
+    <Message Text="_ls-IntermediateItemTemplateFolder: $(_ls-IntermediateItemTemplateFolder)" Importance="low"/>
+    
     <ItemGroup>
       <_ls-IntFilesToZip Remove="@(_ls-IntFilesToZip)"/>
       <!-- Exclude the _Definitions folder from being zipped -->
@@ -291,8 +293,8 @@ Project Templates: @(ls-PT-ToRemove)"/>
     
     <ItemGroup>
       <_ls-ItemTemplatesOutputs 
-        Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)$(_ls-ItemTemplateName).zip')"
-        Condition=" %(ls-VsTemplateFiles.TemplateType)=='ItemTemplate' ">
+        Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)%(OutputRoot)$(_ls-ItemTemplateName).zip')">
+        <OutputRoot>%(ls-VsTemplateFiles.TemplateType)\</OutputRoot>
         <TemplateType>%(ls-VsTemplateFiles.TemplateType)</TemplateType>
         <ItemTemplateName>$(_ls-ItemTemplateName)</ItemTemplateName>
         <VsTemplateSourcePath>%(ls-VsTemplateFiles.Identity)</VsTemplateSourcePath>

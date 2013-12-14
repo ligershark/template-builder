@@ -4,6 +4,7 @@ using System.Text;
 
 namespace LigerShark.TemplateBuilder.Tasks
 {
+    // TODO: We need to add logging to this class
     public class TokenReplacer : IDisposable
     {
         private readonly Stream _scratch;
@@ -276,7 +277,7 @@ namespace LigerShark.TemplateBuilder.Tasks
                 return false;
             }
 
-            Console.WriteLine("Replacing {0} with {1}...", token, replacement);
+            // Console.WriteLine("Replacing {0} with {1}...", token, replacement);
             var encoding = DetectEncoding(_source);
 
             //Get byte runs for token and replacement
