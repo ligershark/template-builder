@@ -192,13 +192,14 @@ Project Templates: @(ls-PT-ToRemove)"/>
     <ItemGroup>
       <ls-temp-FilesCopied Remove="@(ls-temp-FilesCopied)" />
     </ItemGroup>
-
+    
     <!-- TODO: This needs to be refactored into its own target -->
     <!-- Copy over the .vstemplate to the root folder and then copy all files -->
     <Copy SourceFiles="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)"
           DestinationFiles="$(_ls-IntermediateItemTemplateFolder)%(_ls-ItemTemplatesOutputs.Filename).vstemplate">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
+    
     <Copy SourceFiles="@(_ls-ItemsToZip)"
           DestinationFiles="@(_ls-ItemsToZip->'$(_ls-IntermediateItemTemplateFolder)%(RecursiveDir)%(Filename)%(Extension)')"
           UseHardLinksIfPossible="$(ls-UseHardLinksForItemTemplatesCopy)">
@@ -305,13 +306,15 @@ Project Templates: @(ls-PT-ToRemove)"/>
       </_ls-ItemTemplatesOutputs>
     </ItemGroup>
 
-    <Message Text="_ls-ItemTemplatesOutputs.ItemTemplateName: [%(_ls-ItemTemplatesOutputs.ItemTemplateName)]" Importance="low" />
-    <Message Text="_ls-ItemTemplatesOutputs.Identity: [%(_ls-ItemTemplatesOutputs.Identity)]" Importance="low" />
-    <Message Text="ls-ItemTemplateZipRootFolder: $(ls-ItemTemplateZipRootFolder)" Importance="low" />
-    <Message Text="OutputPathWithFileName:$(OutputPathWithFileName)" Importance="low"/>
-    <Message Text="%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)" Importance="low"/>
-
-    <Message Text="_ls-ItemTemplatesOutputs.VsTemplateSourcePath: %(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" />
+    <Message Text="
+    _ls-ItemTemplatesOutputs.Identity: [%(_ls-ItemTemplatesOutputs.Identity)]
+    _ls-ItemTemplatesOutputs.OutputRoot: [%(_ls-ItemTemplatesOutputs.OutputRoot)]
+    _ls-ItemTemplatesOutputs.TemplateType: [%(_ls-ItemTemplatesOutputs.TemplateType)]
+    _ls-ItemTemplatesOutputs.ItemTemplateName: [%(_ls-ItemTemplatesOutputs.ItemTemplateName)]
+    _ls-ItemTemplatesOutputs.VsTemplateSourcePath: [%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)]
+    _ls-ItemTemplatesOutputs.ItemTemplateFolder: [%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)]
+    _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)]
+    _ls-ItemTemplatesOutputs.OutputPathFolder:[%(_ls-ItemTemplatesOutputs.OutputPathFolder)]"/>
   </Target>
 
   <PropertyGroup>
