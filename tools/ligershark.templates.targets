@@ -16,6 +16,7 @@
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
     <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.xml</ls-TemplateReportPath>
+    <ls-GenerateTemplateReport Condition=" '$(ls-GenerateTemplateReport)'=='' ">true</ls-GenerateTemplateReport>
     <!-- 
     Item Templates 
     -->
@@ -450,9 +451,11 @@ Project Templates: @(ls-PT-ToRemove)"/>
       IncludeSnippetFilesInVsix
     </ls-GenerateTemplateReportDependsOn>
   </PropertyGroup>
-  <Target Name="ls-GenerateTemplateReport" DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)"
+  <Target Name="ls-GenerateTemplateReport" 
+          DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)"
           Inputs="@(ls-VsTemplateFiles);@(_ls-Snippet-Files)"
-          Outputs="$(ls-TemplateReportPath)">
+          Outputs="$(ls-TemplateReportPath)"
+          Condition=" '$(ls-GenerateTemplateReport)'=='true' ">
     <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" />
 
     <ItemGroup>
