@@ -9,7 +9,14 @@ using LigerShark.TemplateBuilder.Tasks.Extensions;
 using System.IO;
 
 namespace LigerShark.TemplateBuilder.Tasks {
+    public enum ReportType {
+        Xml,
+        Csv
+    }
     public class GenerateTemplatePackReport : Task {
+        public GenerateTemplatePackReport() {
+            this.ReportType = Tasks.ReportType.Xml;
+        }
 
         [Required]
         public ITaskItem[] TemplateFiles { get; set; }
@@ -17,20 +24,23 @@ namespace LigerShark.TemplateBuilder.Tasks {
         [Required]
         public ITaskItem OutputFile { get; set; }
 
+        public ReportType ReportType { get; set; }
+
         public override bool Execute() {
-            Log.LogMessage("Generating template pack report to: [{0}]", OutputFile.GetFullPath());
+            Log.LogMessage("Generating template pack report using format [{0}] to file: [{1}]",ReportType, OutputFile.GetFullPath());
 
             // the info that we want to show includes the following data
             // Name, Description, ProjetType, ProjectSubType?
             XNamespace ns = "http://schemas.microsoft.com/developer/vstemplate/2005";
 
-            var allResults = from d in this.GetTemplateFilesAsDocs2()
+            var allResults = from d in this.GetTemplateFilesAsDocs()
                              from r in d.Document.Root.Descendants(ns + "TemplateData")
                              orderby r.ElementSafeValue(ns + "Name")
                              orderby r.ElementSafeValue(ns + "ProjectSubType")
                              orderby r.ElementSafeValue(ns + "ProjectType")
                              orderby d.TemplateType
-                             select new {
+                             select new TemplatePackReportModel {
+                                 TemplatePath = d.TemplatePath,
                                  TemplateType = d.TemplateType,
                                  Name = r.ElementSafeValue(ns + "Name"),
                                  Description = r.ElementSafeValue(ns + "Description"),
@@ -38,72 +48,45 @@ namespace LigerShark.TemplateBuilder.Tasks {
                                  ProjectSubType = r.ElementSafeValue(ns + "ProjectSubType")
                              };
 
-
             Log.LogMessage("info.count [{0}]", allResults.Count());
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Template type\tType\tSubType\tName\tDescription");
-            // get the report text now
-            allResults.ToList().ForEach(infoItem => {
-                sb.AppendFormat(
-                    string.Format(
-                        "{0}\t{1}\t{2}\t{3}\t{4}{5}",
-                        infoItem.TemplateType,
-                        infoItem.ProjectType,
-                        infoItem.ProjectSubType,
-                        infoItem.Name,
-                        infoItem.Description,
-                        Environment.NewLine,
-                        string.Empty
-                        ));
-            });
+            ITemplatePackReportWriter reportWriter = null;
+            if (ReportType == Tasks.ReportType.Csv) {
+                reportWriter = new CsvTemplatePackReportWriter();
+            }
+            else if (ReportType == Tasks.ReportType.Xml) {
+                reportWriter = new XmlTemplatePackReportWriter();
+            }
+            else {
+                Log.LogError("Unknown value for ReportType [{0}]", ReportType);
+                return false;
+            }
 
-            File.WriteAllText(OutputFile.GetFullPath(), sb.ToString());
+            reportWriter.WriteReport(allResults, OutputFile.GetFullPath());
 
             return true;
         }
 
-        protected List<XDocument> GetTemplateFilesAsDocs() {
-            List<XDocument> docs = new List<XDocument>();
-
-            this.TemplateFiles.ToList().ForEach(template => {
-
-                try {
-                    var doc = XDocument.Load(template.GetFullPath());
-
-                    docs.Add(doc);
-                }
-                catch (Exception ex) {
-                    Log.LogWarning("Unable to read template file [{0}]", template.GetFullPath());
-                    Log.LogWarning(ex.ToString());
-                }
-            });
-
-            return docs;
-        }
-
-        protected List<TemplateDocument> GetTemplateFilesAsDocs2() {
+        protected List<TemplateDocument> GetTemplateFilesAsDocs() {
             List<TemplateDocument> docs = new List<TemplateDocument>();
 
             this.TemplateFiles.ToList().ForEach(template => {
-                docs.Add(new TemplateDocument(template.GetMetadata("TemplateType"), template.GetFullPath()));
+                docs.Add(new TemplateDocument {
+                    TemplateType = template.GetMetadata("TemplateType"),
+                    TemplatePath = template.GetFullPath()
+                });
             });
 
             return docs;
         }
 
-        protected class TemplateDocument {
-            public TemplateDocument(string templateType, string templatePath) {
-                TemplateType = templateType;
-                this.templatePath = templatePath;
-            }
-
-            private string templatePath { get; set; }
+        protected class TemplateDocument {            
+            public string TemplatePath { get; set; }
             public string TemplateType { get; set; }
             private XDocument document;
             public XDocument Document {
                 get {
-                    if (this.document == null && templatePath != null) {
-                        this.document = XDocument.Load(this.templatePath);
+                    if (this.document == null && TemplatePath != null) {
+                        this.document = XDocument.Load(this.TemplatePath);
                     }
 
                     return this.document;

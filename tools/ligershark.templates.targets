@@ -15,7 +15,7 @@
     <ls-TasksRoot Condition=" '$(ls-TasksRoot)'==''">$(MSBuildThisFileDirectory)</ls-TasksRoot>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
-    <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(IntermediateOutputPath)template-report.txt</ls-TemplateReportPath>
+    <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.txt</ls-TemplateReportPath>
     <!-- 
     Item Templates 
     -->
