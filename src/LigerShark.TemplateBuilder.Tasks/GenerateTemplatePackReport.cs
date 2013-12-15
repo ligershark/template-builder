@@ -11,23 +11,38 @@ using System.IO;
 namespace LigerShark.TemplateBuilder.Tasks {
     public enum ReportType {
         Xml,
-        Csv
+        Text
     }
     public class GenerateTemplatePackReport : Task {
         public GenerateTemplatePackReport() {
-            this.ReportType = Tasks.ReportType.Xml;
+            this.ReportType = Tasks.ReportType.Xml.ToString();
         }
 
         [Required]
         public ITaskItem[] TemplateFiles { get; set; }
+        public ITaskItem[] SnippetFiles { get; set; }
 
         [Required]
         public ITaskItem OutputFile { get; set; }
 
-        public ReportType ReportType { get; set; }
+        private ReportType _reportType;
+        public string ReportType {
+            get { return _reportType.ToString(); }
+            set {
+                ReportType result;
+                if (Enum.TryParse<ReportType>(value, out result)) {
+                    _reportType = result;
+                }
+                else {
+                    Log.LogWarning("Unknown value for ReportType: [{0}]", value);
+                }
+            }
+        }
 
         public override bool Execute() {
             Log.LogMessage("Generating template pack report using format [{0}] to file: [{1}]",ReportType, OutputFile.GetFullPath());
+
+            if (SnippetFiles == null) { SnippetFiles = new ITaskItem[] { }; }
 
             // the info that we want to show includes the following data
             // Name, Description, ProjetType, ProjectSubType?
@@ -48,12 +63,19 @@ namespace LigerShark.TemplateBuilder.Tasks {
                                  ProjectSubType = r.ElementSafeValue(ns + "ProjectSubType")
                              };
 
+            IList<string> snippetFilePaths = new List<string>();
+            SnippetFiles.ToList().ForEach(snippetItem => {
+                snippetFilePaths.Add(snippetItem.GetFullPath());
+            });
+
+            var snippets = GetAllSnippetInfo(snippetFilePaths);
+
             Log.LogMessage("info.count [{0}]", allResults.Count());
             ITemplatePackReportWriter reportWriter = null;
-            if (ReportType == Tasks.ReportType.Csv) {
-                reportWriter = new CsvTemplatePackReportWriter();
+            if (_reportType == Tasks.ReportType.Text) {
+                reportWriter = new TextTemplatePackReportWriter();
             }
-            else if (ReportType == Tasks.ReportType.Xml) {
+            else if (_reportType == Tasks.ReportType.Xml) {
                 reportWriter = new XmlTemplatePackReportWriter();
             }
             else {
@@ -61,7 +83,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 return false;
             }
 
-            reportWriter.WriteReport(allResults, OutputFile.GetFullPath());
+            reportWriter.WriteReport(OutputFile.GetFullPath(), allResults, snippets);
 
             return true;
         }
@@ -79,19 +101,21 @@ namespace LigerShark.TemplateBuilder.Tasks {
             return docs;
         }
 
-        protected class TemplateDocument {            
-            public string TemplatePath { get; set; }
-            public string TemplateType { get; set; }
-            private XDocument document;
-            public XDocument Document {
-                get {
-                    if (this.document == null && TemplatePath != null) {
-                        this.document = XDocument.Load(this.TemplatePath);
-                    }
+        /// <summary>
+        /// This will read the .snippet files and create a SnippetInfo file from it
+        /// </summary>
+        /// <param name="snippetFilePaths"></param>
+        /// <returns></returns>
+        protected List<SnippetInfo> GetAllSnippetInfo(IList<string>snippetFilePaths) {
+            List<SnippetInfo> siList = new List<SnippetInfo>();
 
-                    return this.document;
-                }
+            if (snippetFilePaths != null) {
+                snippetFilePaths.ToList().ForEach(snippetFilePath => {
+                    siList.Add(SnippetInfo.BuildFromSnippetFile(snippetFilePath));
+                });
             }
+
+            return siList;
         }
     }
 }

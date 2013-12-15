@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 
 namespace LigerShark.TemplateBuilder.Tasks {
-    public class CsvTemplatePackReportWriter : LigerShark.TemplateBuilder.Tasks.ITemplatePackReportWriter {
-        public void WriteReport(IEnumerable<TemplatePackReportModel> reportItems, string filePath) {
+    public class TextTemplatePackReportWriter : LigerShark.TemplateBuilder.Tasks.ITemplatePackReportWriter {
+        public void WriteReport(string filePath, IEnumerable<TemplatePackReportModel> reportItems, IEnumerable<SnippetInfo> snippetItems) {
             if (reportItems == null) { throw new ArgumentNullException("reportItems"); }
             if (string.IsNullOrEmpty(filePath)) { throw new ArgumentNullException("filePath"); }
 

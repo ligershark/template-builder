@@ -44,7 +44,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CreateTemplateTask.cs" />
-    <Compile Include="CsvTemplatePackReportWriter.cs" />
+    <Compile Include="SnippetInfo.cs" />
+    <Compile Include="TemplateDocument.cs" />
+    <Compile Include="TextTemplatePackReportWriter.cs" />
     <Compile Include="Extensions\ITaskItem.cs" />
     <Compile Include="Extensions\XElement.cs" />
     <Compile Include="GenerateTemplatePackReport.cs" />

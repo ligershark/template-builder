@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace LigerShark.TemplateBuilder.Tasks {
     public class XmlTemplatePackReportWriter : ITemplatePackReportWriter {
-        public void WriteReport(IEnumerable<TemplatePackReportModel> reportItems, string filePath) {
+        public void WriteReport(string filePath, IEnumerable<TemplatePackReportModel> reportItems, IEnumerable<SnippetInfo> snippetItems) {
             if (reportItems == null) { throw new ArgumentNullException("reportItems"); }
             if (string.IsNullOrEmpty(filePath)) { throw new ArgumentNullException("filePath"); }
         //<?xml version="1.0" encoding="utf-8"?>
@@ -50,7 +50,15 @@ namespace LigerShark.TemplateBuilder.Tasks {
                                 new XAttribute("Description", pt.Description ?? string.Empty),
                                 new XAttribute("ProjectType", pt.ProjectType ?? string.Empty),
                                 new XAttribute("ProjectSubType", pt.ProjectSubType ?? string.Empty))
-                            ));
+                            ),
+                        new XElement("Snippets",
+                            from sn in snippetItems
+                            select new XElement("Snippet",
+                                new XAttribute("Title",sn.Title??string.Empty),
+                                new XAttribute("Description",sn.Description??string.Empty),
+                                new XAttribute("Shortcut",sn.Shortcut??string.Empty),
+                                new XAttribute("Path",GetRelativePathForTemplatePath(filePath,sn.Path))))
+                                );
 
                 result.Save(filePath);
             }

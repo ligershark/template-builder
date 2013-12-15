@@ -15,7 +15,7 @@
     <ls-TasksRoot Condition=" '$(ls-TasksRoot)'==''">$(MSBuildThisFileDirectory)</ls-TasksRoot>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
-    <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.txt</ls-TemplateReportPath>
+    <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.xml</ls-TemplateReportPath>
     <!-- 
     Item Templates 
     -->
@@ -450,17 +450,20 @@ Project Templates: @(ls-PT-ToRemove)"/>
       IncludeSnippetFilesInVsix
     </ls-GenerateTemplateReportDependsOn>
   </PropertyGroup>
-  <Target Name="ls-GenerateTemplateReport" DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)">
+  <Target Name="ls-GenerateTemplateReport" DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)"
+          Inputs="@(ls-VsTemplateFiles);@(_ls-Snippet-Files)"
+          Outputs="$(ls-TemplateReportPath)">
     <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" />
 
-    <GenerateTemplatePackReport TemplateFiles="@(ls-VsTemplateFiles)"
-                                OutputFile="$(ls-TemplateReportPath)"/>
+    <ItemGroup>
+      <_ls-SnippetFilesOnly Include="@(_ls-Snippet-Files)"
+                            Condition=" '%(_ls-Snippet-Files.Extension)'=='.snippet' " />
+    </ItemGroup>
     
-    <ReadLinesFromFile File="$(ls-TemplateReportPath)">
-      <Output ItemName="ls-AllTemplateReportText" TaskParameter="Lines"/>
-    </ReadLinesFromFile>
-    <Message Text="@(ls-AllTemplateReportText->'%(Identity)','%0a%0d')" />
-
+    <GenerateTemplatePackReport TemplateFiles="@(ls-VsTemplateFiles)"
+                                SnippetFiles="@(_ls-SnippetFilesOnly)"
+                                OutputFile="$(ls-TemplateReportPath)"                                
+                                ReportType="Xml"/>
   </Target>
   
   <!--************************************************************************************
