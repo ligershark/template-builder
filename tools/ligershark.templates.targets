@@ -59,8 +59,7 @@
     <Copy SourceFiles="@(ls-BuildAssemblies)"
           DestinationFiles="@(ls-BuildAssemblies->'$(ls-MSBuildLibPathLocal)%(FileName)%(Extension)')"
           Condition="!Exists('$(ls-MSBuildLibPathLocal)%(ls-BuildAssemblies.FileName)%(ls-BuildAssemblies.Extension)')"
-          />
-    
+          />    
   </Target>
 
   <UsingTask AssemblyFile="$(ls-MSBuildLibPathLocal)MSBuild.ExtensionPack.dll" TaskName="MSBuild.ExtensionPack.Compression.Zip" />

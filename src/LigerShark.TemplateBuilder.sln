@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LigerShark.TemplateBuilder.Tasks", "LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj", "{6C8A0DBB-97DC-421A-8717-DCCBFB8EB39F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{0E4BEE75-4F15-468A-87A8-F2551021FF17}"
@@ -12,10 +14,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{0E4BEE75
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemplateBuilder", "TemplateBuilder\TemplateBuilder.csproj", "{8C06A919-5046-41BC-895D-7276715F5748}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{48D37B16-4C91-4F59-8338-E1D605869F09}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuGet", "NuGet", "{48D37B16-4C91-4F59-8338-E1D605869F09}"
 	ProjectSection(SolutionItems) = preProject
 		..\tools\Install.ps1 = ..\tools\Install.ps1
 		..\tools\ligershark.templates.targets = ..\tools\ligershark.templates.targets
+		..\content\Properties\template-builder.props = ..\content\Properties\template-builder.props
 		..\tools\template-builder.psm1 = ..\tools\template-builder.psm1
 	EndProjectSection
 EndProject
