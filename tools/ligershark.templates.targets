@@ -310,6 +310,20 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
     
+    <!-- There may be some loose TemplateBuilder files that need to be copied if so copy those too -->
+    <ItemGroup>
+      <_ls-AddlFilesToCopy Remove="@(_ls-AddlFilesToCopy)"/>
+      <_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\*.*proj;"/>
+      <_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\_preprocess.xml"/>
+    </ItemGroup>
+    
+    <Message Text="_ls-AddlFilesToCopy: [@(_ls-AddlFilesToCopy)]" Importance="low"/>
+
+    <Copy SourceFiles="@(_ls-AddlFilesToCopy)"
+          DestinationFiles="@(_ls-AddlFilesToCopy->'$(ls-DestTemplateOutputRoot)%(RecursiveDir)%(Filename)%(Extension)')">
+      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
+    </Copy>
+   
     <!-- We need to populate _ls-ItemTemplatesOutputs to ensure the rest of the process is invoked -->
     <ItemGroup>
       <_ls-ItemTemplatesOutputs
