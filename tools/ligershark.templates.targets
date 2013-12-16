@@ -257,8 +257,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
     <PropertyGroup>
       <_ls-pathToFile>%(ls-VsNewProjTemplateFiles.RootDir)%(ls-VsNewProjTemplateFiles.Directory)\..\$(_ls-projFile)</_ls-pathToFile>
-      <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>
-      
+      <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>      
     </PropertyGroup>
     
     <ItemGroup>
@@ -278,7 +277,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
     <PropertyGroup>
       <ls-DestTemplateOutputRoot>$(ls-ItemTemplateOutputRoot)%(ls-VsNewProjTemplateFiles.OutputRoot)$(_ls-TemplateName2)\</ls-DestTemplateOutputRoot>
-      <_ls-DestVsTemplatePath>@(ls-VsNewProjTemplateFiles->'$(ls-DestTemplateOutputRoot)_Definitions\%(Filename)%(Extension)')</_ls-DestVsTemplatePath>
+      <_ls-DestVsTemplatePath>@(ls-VsNewProjTemplateFiles->'$(ls-DestTemplateOutputRoot)%(Filename)%(Extension)')</_ls-DestVsTemplatePath>
       <_ls-DestVsTemplateFullPath>$([System.IO.Path]::GetFullPath($(_ls-DestVsTemplatePath)))</_ls-DestVsTemplateFullPath>
       <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(ls-VsNewProjTemplateFiles.OutputRoot)$(_ls-TemplateName2)\</_ls-IntermediateItemTemplateFolder>
     </PropertyGroup>

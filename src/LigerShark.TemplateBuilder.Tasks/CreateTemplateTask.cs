@@ -174,7 +174,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 "DebugSymbolsProjectOutputGroupOutput",
                 "AvailableItemName",
                 "Clean",
-                "XamlBuildTaskTypeGenerationExtensionName"
+                "XamlBuildTaskTypeGenerationExtensionName",
+                "Folder"
             };
 
             return !item.ItemType.StartsWith("_") && !nonFileTypes.Contains(item.ItemType);
