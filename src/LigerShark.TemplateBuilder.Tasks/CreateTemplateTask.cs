@@ -180,7 +180,13 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 "WebPublishExtnsionsToExcludeItem"
             };
 
-            return !item.ItemType.StartsWith("_") && !nonFileTypes.Contains(item.ItemType);
+            // if it ends with a / or \ assuem it points to a folder
+            string include = item.EvaluatedInclude ?? string.Empty;
+
+            return !item.ItemType.StartsWith("_")
+                        && !nonFileTypes.Contains(item.ItemType)
+                        && !include.EndsWith(@"/")
+                        && !include.EndsWith(@"\");
         }
 
         private static void Merge(XElement rootElement, IEnumerable<string> filesToMerge) {

@@ -67,6 +67,10 @@
   
   <!-- This hooks up the ItemTemplate targets to the Build Process -->
   <PropertyGroup>
+    <MarkupCompilePass1DependsOn>
+      RemoveTemplateFilesFromCompile;
+      $(MarkupCompilePass1DependsOn);
+    </MarkupCompilePass1DependsOn>
     <CoreCompileDependsOn Condition=" '$(ls-ItemTemplatesExtendBuild)'=='true' ">
       CopyMSBuildFilesToLocalAppData;
       RemoveTemplateFilesFromCompile;
@@ -94,6 +98,13 @@
 
       <Compile Remove="ProjectTemplates\**\*"/>
       <Compile Remove="ItemTemplates\**\*"/>
+
+
+      <Page Remove="$(ls-ItemTemplateRoot)**\*"/>
+      <Page Remove="$(ls-ProjectTemplateRoot)**\*"/>
+
+      <Page Remove="ProjectTemplates\**\*"/>
+      <Page Remove="ItemTemplates\**\*"/>
     </ItemGroup>
 
     <Message Text="ls-ItemTemplateRoot:[$(ls-ItemTemplateRoot)]" Importance="low"/>
@@ -277,7 +288,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
     <PropertyGroup>
       <ls-DestTemplateOutputRoot>$(ls-ItemTemplateOutputRoot)%(ls-VsNewProjTemplateFiles.OutputRoot)$(_ls-TemplateName2)\</ls-DestTemplateOutputRoot>
-      <_ls-DestVsTemplatePath>@(ls-VsNewProjTemplateFiles->'$(ls-DestTemplateOutputRoot)%(Filename)%(Extension)')</_ls-DestVsTemplatePath>
+      <_ls-DestVsTemplatePath>@(ls-VsNewProjTemplateFiles->'$(ls-DestTemplateOutputRoot)_project.vstemplate')</_ls-DestVsTemplatePath>
       <_ls-DestVsTemplateFullPath>$([System.IO.Path]::GetFullPath($(_ls-DestVsTemplatePath)))</_ls-DestVsTemplateFullPath>
       <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(ls-VsNewProjTemplateFiles.OutputRoot)$(_ls-TemplateName2)\</_ls-IntermediateItemTemplateFolder>
     </PropertyGroup>
@@ -305,6 +316,13 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
     </CreateTemplateTask>
 
+    <Message Text="_ls-NewProjFilesToCopyRaw: @(_ls-NewProjFilesToCopyRaw)" Importance="low"/>
+    
+    <!-- Copy the .vstemplate file to the dest -->
+    <!--<Copy SourceFiles="%(ls-VsNewProjTemplateFiles.Identity)"
+          DestinationFiles="">
+      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
+    </Copy>-->
     <Copy SourceFiles="@(_ls-NewProjFilesToCopyRaw->'$(_ls-TemplateFolder2)%(Identity)')"
           DestinationFiles="@(_ls-NewProjFilesToCopyRaw->'$(ls-DestTemplateOutputRoot)%(Identity)')">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
