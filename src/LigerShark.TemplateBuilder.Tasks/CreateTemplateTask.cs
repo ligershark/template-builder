@@ -18,8 +18,10 @@ namespace LigerShark.TemplateBuilder.Tasks {
         [Required]
         public string DestinationTemplateLocation { get; set; }
 
+        public List<string> _filesToCopy { get; set; }
+
         [Output]
-        public List<string> FilesToCopy { get; set; }
+        public ITaskItem[] FilesToCopy { get; set; }
 
         private const string MSBuildSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
 
@@ -100,7 +102,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             var targetFileNames = new HashSet<string>();
 
             RecurseItems(projectElement, sourceFileNames, targetFileNames);
-            FilesToCopy = new List<string>();
+            _filesToCopy = new List<string>();
             var itemsToMerge = new List<string>();
 
             foreach (var item in project.Items) {
@@ -115,7 +117,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                     continue;
                 }
 
-                FilesToCopy.Add(name);
+                _filesToCopy.Add(name);
 
                 if (!sourceFileNames.Contains(lowerName)) {
                     itemsToMerge.Add(name);
@@ -124,6 +126,12 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             Merge(projectElement, itemsToMerge);
             workingTemplate.Save(DestinationTemplateLocation);
+
+            FilesToCopy = new ITaskItem[_filesToCopy.Count];
+            for (int i = 0; i < FilesToCopy.Length; i++) {
+                FilesToCopy[i] = new TaskItem(_filesToCopy[i]);
+            }
+
             return true;
         }
 

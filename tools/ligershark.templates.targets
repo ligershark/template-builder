@@ -45,6 +45,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
+    <ls-VsTemplateXmlSchema Condition=" '$(ls-VsTemplateXmlSchema)'=='' ">http://schemas.microsoft.com/developer/vstemplate/2005</ls-VsTemplateXmlSchema>
     <ls-UseHardLinksForItemTemplatesCopy Condition=" '$(ls-UseHardLinksForItemTemplatesCopy)'=='' ">false</ls-UseHardLinksForItemTemplatesCopy>
   </PropertyGroup>
 
@@ -106,18 +107,28 @@
     <!-- Look through Item Templates folder for all .vstemplate files in the project (as Content) -->
     <ItemGroup>
       <!-- Item Templates -->
-      <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate" Exclude="$(ls-ItemTemplateRoot)**\MyTemplate.vstemplate">
+      <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate" 
+                          Exclude="$(ls-ItemTemplateRoot)**\MyTemplate.vstemplate;$(ls-ProjectTemplateRoot)**\_project.vstemplate">
         <TemplateType>ItemTemplate</TemplateType>
         <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
       
-      <!-- Project Template -->
-      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate" Exclude="$(ls-ProjectTemplateRoot)**\MyTemplate.vstemplate">
+      <!-- Project Templates -->
+      <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate" 
+                          Exclude="$(ls-ProjectTemplateRoot)**\MyTemplate.vstemplate;$(ls-ProjectTemplateRoot)**\_project.vstemplate">
         <TemplateType>ProjectTemplate</TemplateType>
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
+      
+      <ls-VsNewProjTemplateFiles Include="$(ls-ProjectTemplateRoot)**\_project.vstemplate">
+        <TemplateType>ProjectTemplate</TemplateType>
+        <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
+        <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
+
+        <OutputRoot>ProjectTemplate\</OutputRoot>
+      </ls-VsNewProjTemplateFiles>
     </ItemGroup>
 
     <ItemGroup Condition=" '$(Configuration)'=='Release' " >
@@ -147,18 +158,22 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
   <PropertyGroup>
     <ls-CopyTemplateFilesToIntermediateFolderDependsOn>
-      ls-MessageForCopyTemplateFilesToIntermediateFolder;
       $(ls-CopyTemplateFilesToIntermediateFolderDependsOn);
+      ls-MessageForCopyTemplateFilesToIntermediateFolder;
+      ls-CoreCopyTemplateFilesToIntermediateFolder;
+      ls-CopyNewProjectTemplateFilesToIntermediateFolder;
     </ls-CopyTemplateFilesToIntermediateFolderDependsOn>
   </PropertyGroup>
   <Target Name="ls-MessageForCopyTemplateFilesToIntermediateFolder">
     <Message Text="Copying template files to the intermediate folder" Importance="high"/>
   </Target>
+  <Target Name="ls-CopyTemplateFilesToIntermediateFolder" DependsOnTargets="$(ls-CopyTemplateFilesToIntermediateFolderDependsOn)"/>
+  
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
-  <Target Name="ls-CopyTemplateFilesToIntermediateFolder"
+  <Target Name="ls-CoreCopyTemplateFilesToIntermediateFolder"
           Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
           Outputs="%(_ls-ItemTemplatesOutputs.Identity);All"
-          DependsOnTargets="$(ls-CopyTemplateFilesToIntermediateFolderDependsOn)">
+          DependsOnTargets="$(ls-CoreCopyTemplateFilesToIntermediateFolder)">
     
     <Message Text="Determining files to incude in Item Template .zip file for [%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)]"/>
 
@@ -169,12 +184,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
     <ItemGroup>
       <_ls-ItemsToZip Remove="@(_ls-ItemsToZip)"/>
       <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" />
-      <!-- <_ls-ItemsToZip Include="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*" 
-                      Exclude="%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)_Definitions\**\*;%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)**\*.vstemplate"> 
-      </_ls-ItemsToZip>-->
     </ItemGroup>
-
-    <Message Text="Creating Item Template .zip file at [%(_ls-ItemTemplatesOutputs.OutputPathWithFileName)]" />
     
     <!-- We need to copy the files into a subfolder under obj\ and then create the .zip file from that -->
     <PropertyGroup>
@@ -220,6 +230,103 @@ Project Templates: @(ls-PT-ToRemove)"/>
   <Target Name="ls-MessageForCreateZipForEachItemTemplate">
     <Message Text="Creating a zip file for each template" Importance="high"/>
   </Target>
+
+  <PropertyGroup>
+    <ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
+      $(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn);
+    </ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
+  </PropertyGroup>
+  <!--
+  This target is called once per value in @(ls-VsNewProjTemplateFiles)
+  -->
+  <Target Name="ls-CopyNewProjectTemplateFilesToIntermediateFolder" 
+          Outputs="%(ls-VsNewProjTemplateFiles.Identity)"
+          DependsOnTargets="$(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn)">
+    <!-- we need to figure out the name of the project that is contained in the _project.vstemplate file -->
+    <PropertyGroup>
+      <_ls-vsTemplateProjFileXPath>dft:VSTemplate/dft:TemplateContent/dft:Project[1]/@File</_ls-vsTemplateProjFileXPath>
+      <_ls-templateFilePath>%(ls-VsNewProjTemplateFiles.FullPath)</_ls-templateFilePath>
+    </PropertyGroup>
+    <XmlPeek Namespaces="&lt;Namespace Prefix='dft' Uri='$(ls-VsTemplateXmlSchema)'/&gt;"
+             XmlInputPath="$(_ls-templateFilePath)"
+             Query="dft:VSTemplate/dft:TemplateContent/dft:Project[1]/@File">
+      <Output TaskParameter="Result" PropertyName="_ls-projFile"/>
+    </XmlPeek>
+
+    <Message Text="_ls-projFile: $(_ls-projFile)" Importance="high"/>
+
+    <PropertyGroup>
+      <_ls-pathToFile>%(ls-VsNewProjTemplateFiles.RootDir)%(ls-VsNewProjTemplateFiles.Directory)\..\$(_ls-projFile)</_ls-pathToFile>
+      <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>
+      
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <_ls-TempFileToAdd Include="$(_ls-fullPathToFile)"/>
+    </ItemGroup>
+
+    <GetItemTemplateNameFromVSTemplatePath
+      VstemplateFilePath="$(_ls-templateFilePath)"
+      ItemTemplateRoot="%(ls-VsNewProjTemplateFiles.TemplatesRoot)"
+      ItemTemplateZipRootFolder="%(ls-VsNewProjTemplateFiles.ZipRootFolder)"
+      CustomTemplatesFolder="$(ls-TemplateSubFolder)">
+      <Output TaskParameter="ItemTemplateName" PropertyName="_ls-TemplateName2" />
+      <Output TaskParameter="ItemTemplateFolder" PropertyName="_ls-TemplateFolder2" />
+      <Output TaskParameter="OutputPathWithFileName" PropertyName="OutputPathWithFileName2" />
+      <Output TaskParameter="OutputPathFolder" PropertyName="OutputPathFolder2"/>
+    </GetItemTemplateNameFromVSTemplatePath>
+
+    <PropertyGroup>
+      <ls-DestTemplateOutputRoot>$(ls-ItemTemplateOutputRoot)%(ls-VsNewProjTemplateFiles.OutputRoot)$(_ls-TemplateName2)\</ls-DestTemplateOutputRoot>
+      <_ls-DestVsTemplatePath>@(ls-VsNewProjTemplateFiles->'$(ls-DestTemplateOutputRoot)_Definitions\%(Filename)%(Extension)')</_ls-DestVsTemplatePath>
+      <_ls-DestVsTemplateFullPath>$([System.IO.Path]::GetFullPath($(_ls-DestVsTemplatePath)))</_ls-DestVsTemplateFullPath>
+      <_ls-IntermediateItemTemplateFolder>$(ls-ItemTemplateOutputRoot)%(ls-VsNewProjTemplateFiles.OutputRoot)$(_ls-TemplateName2)\</_ls-IntermediateItemTemplateFolder>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <_ls-DestVsTemplateItem Include="$(_ls-DestVsTemplateFullPath)"/>
+    </ItemGroup>
+    <Message Text="
+ls-VsNewProjTemplateFiles.Identity: [%(ls-VsNewProjTemplateFiles.Identity)]
+_ls-TemplateFolder2: $(_ls-TemplateFolder2)
+_ls-TempFileToAdd: [@(_ls-TempFileToAdd)]
+OutputPathFolder2: [$(OutputPathFolder2)]
+_ls-fullPathToFile: [$(_ls-fullPathToFile)]
+_ls-TemplateFolder2:[$(_ls-TemplateFolder2)]
+_ls-DestVsTemplatePath: [$(_ls-DestVsTemplatePath)]
+_ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
+
+    <MakeDir Directories="@(_ls-DestVsTemplateItem->'%(RootDir)%(Directory)')"/>
+
+    <!-- Expand out the .vstemplate to include all files listed in the .csproj -->
+    <CreateTemplateTask
+      ProjectFile="$(_ls-fullPathToFile)"
+      VsTemplateShell="%(ls-VsNewProjTemplateFiles.FullPath)"
+      DestinationTemplateLocation="$(_ls-DestVsTemplateFullPath)">
+      <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
+    </CreateTemplateTask>
+
+    <Copy SourceFiles="@(_ls-NewProjFilesToCopyRaw->'$(_ls-TemplateFolder2)%(Identity)')"
+          DestinationFiles="@(_ls-NewProjFilesToCopyRaw->'$(ls-DestTemplateOutputRoot)%(Identity)')">
+      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
+    </Copy>
+    
+    <!-- We need to populate _ls-ItemTemplatesOutputs to ensure the rest of the process is invoked -->
+    <ItemGroup>
+      <_ls-ItemTemplatesOutputs
+          Include="@(ls-VsNewProjTemplateFiles->'$(ls-ItemTemplateOutputRoot)$(_ls-TemplateName2).zip')">
+        <OutputRoot>%(ls-VsNewProjTemplateFiles.TemplateType)\</OutputRoot>
+        <TemplateType>%(ls-VsNewProjTemplateFiles.TemplateType)</TemplateType>
+        <ItemTemplateName>$(_ls-TemplateName2)</ItemTemplateName>
+        <VsTemplateSourcePath>%(ls-VsNewProjTemplateFiles.Identity)</VsTemplateSourcePath>
+        <ItemTemplateFolder>$(_ls-TemplateFolder2)</ItemTemplateFolder>
+
+        <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
+        <OutputPathFolder>$(OutputPathFolder)</OutputPathFolder>
+      </_ls-ItemTemplatesOutputs>
+    </ItemGroup>
+  </Target>
+  
   <!-- This target will run once per value in @(ls-ItemTemplatesOutputs) -->
   <Target Name="ls-CreateZipForEachItemTemplate"
           Inputs="%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)" 
@@ -291,7 +398,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
       <Output TaskParameter="OutputPathWithFileName" PropertyName="OutputPathWithFileName" />
       <Output TaskParameter="OutputPathFolder" PropertyName="OutputPathFolder"/>
     </GetItemTemplateNameFromVSTemplatePath>
-    
+
     <ItemGroup>
       <_ls-ItemTemplatesOutputs 
         Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)%(OutputRoot)$(_ls-ItemTemplateName).zip')">
@@ -304,6 +411,19 @@ Project Templates: @(ls-PT-ToRemove)"/>
         <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
         <OutputPathFolder>$(OutputPathFolder)</OutputPathFolder>
       </_ls-ItemTemplatesOutputs>
+
+      <!--<_ls-ProjectTemplatesOutputs
+        Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)%(OutputRoot)$(_ls-ItemTemplateName).zip')"
+        Condition=" '%(ls-VsTemplateFiles.TemplateType)'=='ProjectTemplate' ">
+        <OutputRoot>%(ls-VsTemplateFiles.TemplateType)\</OutputRoot>
+        <TemplateType>%(ls-VsTemplateFiles.TemplateType)</TemplateType>
+        <ItemTemplateName>$(_ls-ItemTemplateName)</ItemTemplateName>
+        <VsTemplateSourcePath>%(ls-VsTemplateFiles.Identity)</VsTemplateSourcePath>
+        <ItemTemplateFolder>$(_ls-ItemTemplateFolder)</ItemTemplateFolder>
+
+        <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
+        <OutputPathFolder>$(OutputPathFolder)</OutputPathFolder>
+      </_ls-ProjectTemplatesOutputs>-->
     </ItemGroup>
 
     <Message Text="
@@ -472,9 +592,9 @@ Project Templates: @(ls-PT-ToRemove)"/>
       Tasks defined below
   ************************************************************************************-->
   <UsingTask TaskName="GenerateTemplatePackReport" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
-  <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
-  
+  <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>  
   <UsingTask TaskName="ReplaceInFiles" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
+  <UsingTask TaskName="CreateTemplateTask" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
 
   <UsingTask TaskName="ParseTemplateInfoFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
