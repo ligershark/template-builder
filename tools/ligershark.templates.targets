@@ -253,7 +253,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
       <Output TaskParameter="Result" PropertyName="_ls-projFile"/>
     </XmlPeek>
 
-    <Message Text="_ls-projFile: $(_ls-projFile)" Importance="high"/>
+    <Message Text="_ls-projFile: $(_ls-projFile)" Importance="low"/>
 
     <PropertyGroup>
       <_ls-pathToFile>%(ls-VsNewProjTemplateFiles.RootDir)%(ls-VsNewProjTemplateFiles.Directory)\..\$(_ls-projFile)</_ls-pathToFile>
@@ -595,74 +595,4 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
   <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>  
   <UsingTask TaskName="ReplaceInFiles" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="CreateTemplateTask" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
-
-  <UsingTask TaskName="ParseTemplateInfoFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
-    <ParameterGroup>
-      <FilePath ParameterType="System.String" Required="true"/>
-      <ReplacementsItemSpec ParameterType="System.String" />
-
-      <!-- Outputs -->
-      <Include ParameterType="System.String" Output="true"/>
-      <Exclude ParameterType="System.String" Output="true"/>
-      <Replacements ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true"/>
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System.Core" />
-      <Reference Include="System.Xml" />
-      <Reference Include="System.Xml.Linq" />
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Net" />
-      <Using Namespace="System.Xml.Linq"/>
-      <Using Namespace="Microsoft.Build.Framework" />
-      <Using Namespace="Microsoft.Build.Utilities" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-         Log.LogMessage("ParseTemplateInfoFile called on file [{0}]", FilePath);
-
-            if (!File.Exists(FilePath)) {
-                Log.LogError("templateinfo.xml file not found at [{0}]",FilePath);
-                return false;
-            }
-            if(string.IsNullOrEmpty(ReplacementsItemSpec)){
-                ReplacementsItemSpec = "Replacements";
-            }
-
-            try {
-                XDocument doc = XDocument.Load(FilePath);
-                var result = (from r in doc.Root.Elements("Replacements")
-                             select new {
-                                 Include = r.Attribute("Include").Value,
-                                 Exclude = r.Attribute("Exclude").Value,
-                                 Replacements = (
-                                     from a in r.Elements("add")
-                                     select new {
-                                         Key = a.Attribute("key").Value,
-                                         Value = a.Attribute("value").Value
-                                     }
-                                 )
-                             }).Single();
-
-                this.Include = result.Include;
-                this.Exclude = result.Exclude;
-                List<ITaskItem> repList = new List<ITaskItem>();
-                
-                foreach(var item in result.Replacements){
-                    ITaskItem rep = new TaskItem(ReplacementsItemSpec);
-                    rep.SetMetadata(item.Key, item.Value);
-                    repList.Add(rep);
-                }
-
-                Replacements = repList.ToArray();
-
-            }
-            catch (Exception ex) {
-                Log.LogError("Unable to parse template info file [{0}]. Details=[{1}]",FilePath,ex.ToString());
-                return false;
-            }
-            return true;    
-        ]]>
-      </Code>
-    </Task>
-  </UsingTask>
 </Project>
