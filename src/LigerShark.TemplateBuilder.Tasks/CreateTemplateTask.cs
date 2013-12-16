@@ -117,7 +117,9 @@ namespace LigerShark.TemplateBuilder.Tasks {
                     continue;
                 }
 
-                _filesToCopy.Add(name);
+                if(item.ItemType != "Folder") {
+                    _filesToCopy.Add(name);
+                }
 
                 if (!sourceFileNames.Contains(lowerName)) {
                     itemsToMerge.Add(name);
@@ -175,14 +177,14 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 "AvailableItemName",
                 "Clean",
                 "XamlBuildTaskTypeGenerationExtensionName",
-                "Folder"
+                "WebPublishExtnsionsToExcludeItem"
             };
 
             return !item.ItemType.StartsWith("_") && !nonFileTypes.Contains(item.ItemType);
         }
 
         private static void Merge(XElement rootElement, IEnumerable<string> filesToMerge) {
-            var splitFiles = filesToMerge.Select(x => x.Split('\\'));
+            var splitFiles = filesToMerge.OrderBy(x => x).Select(x => x.Split('\\'));
 
             foreach (var fileParts in splitFiles) {
                 var workingElement = rootElement;
@@ -197,12 +199,17 @@ namespace LigerShark.TemplateBuilder.Tasks {
                         workingElement.Add(newWorkingElement);
                         workingElement = newWorkingElement;
                     }
+                    else {
+                        workingElement = newWorkingElement;
+                    }
                 }
 
-                var fileElement = new XElement(XName.Get("ProjectItem", MSBuildSchema), fileParts[fileParts.Length - 1]);
-                fileElement.Add(new XAttribute(XName.Get("TargetFileName"), fileParts[fileParts.Length - 1]));
-                fileElement.Add(new XAttribute(XName.Get("ReplaceParameters"), true));
-                workingElement.Add(fileElement);
+                if (!string.IsNullOrWhiteSpace(fileParts[fileParts.Length - 1])) {
+                    var fileElement = new XElement(XName.Get("ProjectItem", MSBuildSchema), fileParts[fileParts.Length - 1]);
+                    fileElement.Add(new XAttribute(XName.Get("ReplaceParameters"), true));
+                    fileElement.Add(new XAttribute(XName.Get("TargetFileName"), fileParts[fileParts.Length - 1]));
+                    workingElement.Add(fileElement);
+                }
             }
         }
     }
