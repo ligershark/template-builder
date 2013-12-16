@@ -93,7 +93,7 @@
                     ItemTemplateName = string.Format("{0}.fsharp", itRootFileName);
                     OutputPathFolder = string.Format(@"{0}FSharp\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);
                 }
-                else if (string.Compare(@"_project.vstemplate", vsTemplateFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0) {
+                else if (string.Compare(@"_project.vstemplate.xml", vsTemplateFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0) {
                     // TODO: What to do here?
                     ItemTemplateName = string.Format("{0}.project", itRootFileName);
                     OutputPathFolder = string.Format(@"{0}CSharp\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);

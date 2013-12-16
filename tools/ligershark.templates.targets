@@ -108,7 +108,7 @@
     <ItemGroup>
       <!-- Item Templates -->
       <ls-VsTemplateFiles Include="$(ls-ItemTemplateRoot)**\*.vstemplate" 
-                          Exclude="$(ls-ItemTemplateRoot)**\MyTemplate.vstemplate;$(ls-ProjectTemplateRoot)**\_project.vstemplate">
+                          Exclude="$(ls-ItemTemplateRoot)**\MyTemplate.vstemplate;$(ls-ProjectTemplateRoot)**\_project.vstemplate.xml">
         <TemplateType>ItemTemplate</TemplateType>
         <TemplatesRoot>$(ls-ItemTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ItemTemplateZipRootFolder)</ZipRootFolder>
@@ -116,13 +116,13 @@
       
       <!-- Project Templates -->
       <ls-VsTemplateFiles Include="$(ls-ProjectTemplateRoot)**\*.vstemplate" 
-                          Exclude="$(ls-ProjectTemplateRoot)**\MyTemplate.vstemplate;$(ls-ProjectTemplateRoot)**\_project.vstemplate">
+                          Exclude="$(ls-ProjectTemplateRoot)**\MyTemplate.vstemplate;$(ls-ProjectTemplateRoot)**\_project.vstemplate.xml">
         <TemplateType>ProjectTemplate</TemplateType>
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
       </ls-VsTemplateFiles>
       
-      <ls-VsNewProjTemplateFiles Include="$(ls-ProjectTemplateRoot)**\_project.vstemplate">
+      <ls-VsNewProjTemplateFiles Include="$(ls-ProjectTemplateRoot)**\_project.vstemplate.xml">
         <TemplateType>ProjectTemplate</TemplateType>
         <TemplatesRoot>$(ls-ProjectTemplateRoot)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
@@ -242,7 +242,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
   <Target Name="ls-CopyNewProjectTemplateFilesToIntermediateFolder" 
           Outputs="%(ls-VsNewProjTemplateFiles.Identity)"
           DependsOnTargets="$(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn)">
-    <!-- we need to figure out the name of the project that is contained in the _project.vstemplate file -->
+    <!-- we need to figure out the name of the project that is contained in the _project.vstemplate.xml file -->
     <PropertyGroup>
       <_ls-vsTemplateProjFileXPath>dft:VSTemplate/dft:TemplateContent/dft:Project[1]/@File</_ls-vsTemplateProjFileXPath>
       <_ls-templateFilePath>%(ls-VsNewProjTemplateFiles.FullPath)</_ls-templateFilePath>
