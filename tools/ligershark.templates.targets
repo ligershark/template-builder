@@ -252,7 +252,8 @@ Project Templates: @(ls-PT-ToRemove)"/>
   -->
   <Target Name="ls-CopyNewProjectTemplateFilesToIntermediateFolder" 
           Outputs="%(ls-VsNewProjTemplateFiles.Identity)"
-          DependsOnTargets="$(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn)">
+          DependsOnTargets="$(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn)"
+          Condition=" '@(ls-VsNewProjTemplateFiles)'!= ''">
     <!-- we need to figure out the name of the project that is contained in the _project.vstemplate.xml file -->
     <PropertyGroup>
       <_ls-vsTemplateProjFileXPath>dft:VSTemplate/dft:TemplateContent/dft:Project[1]/@File</_ls-vsTemplateProjFileXPath>
