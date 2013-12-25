@@ -41,6 +41,22 @@
         public string OutputPathWithFileName { get; set; }
         #endregion
 
+        private string GetCustomOutputPathFolder(string templateRoot) {
+            if (string.IsNullOrEmpty(templateRoot)) { throw new ArgumentNullException("templateRoot"); }
+
+            string result = null;
+            // see if there is a _preprocess.xml file in the root of the folder
+            FileInfo preprocessFi = new FileInfo(Path.Combine(templateRoot, "_preprocess.xml"));
+            if (preprocessFi.Exists) {
+                // parse the file
+                TemplateInfo templateInfo = TemplateInfo.BuildTemplateInfoFrom(preprocessFi.FullName);
+                if (!string.IsNullOrEmpty(templateInfo.OverridePath)) {
+                    result = templateInfo.OverridePath;
+                }
+            }
+
+            return result;
+        }
         public override bool Execute() {
                 Log.LogMessage("GetItemTemplateNameFromVSTemplatePath Starting");
                 System.IO.FileInfo vsTemplateFileInfo = new System.IO.FileInfo(VstemplateFilePath);
@@ -60,7 +76,9 @@
 
                 string itRootFileName = di.Parent.Name;
                 string subFolder = this.CustomTemplatesFolder;
-                
+
+                string customOutputPathFolder = GetCustomOutputPathFolder(ItemTemplateFolder);
+
                 // set OutputFolder
                 // if the name is 
                 //  'CSharp.vstemplate' -> CSharp\
@@ -69,7 +87,7 @@
                 //  'Web.VB.vstemplate' -> VisualBasic\Web\
                 //  'fsharp.vstemplate' -> FSharp\
                 if (string.Compare(@"CSharp.vstemplate", vsTemplateFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0) {
-                    ItemTemplateName = string.Format("{0}.csharp", itRootFileName);
+                    ItemTemplateName = string.Format("{0}.csharp", itRootFileName);                    
                     OutputPathFolder = string.Format(@"{0}CSharp\{1}\{2}", ItemTemplateZipRootFolder, templateRelPath, subFolder);
                 }
                 else if (string.Compare(@"Web.CSharp.vstemplate", vsTemplateFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0) {
@@ -101,6 +119,10 @@
                 else {
                     Log.LogError("Unknown value for ItemTemplateName: [{0}]. Supported values include 'CSharp.vstemplate','Web.CSharp.vstemplate','VB.vstemplate' and 'Web.VB.vstemplate' ", vsTemplateFileInfo.Name);
                     return false;
+                }
+
+                if (!string.IsNullOrEmpty(customOutputPathFolder)) {
+                    OutputPathFolder = string.Format(@"{0}"+customOutputPathFolder, ItemTemplateZipRootFolder, templateRelPath, subFolder);
                 }
 
                 OutputPathWithFileName = string.Format(@"{0}\{1}{2}", OutputPathFolder, itRootFileName,di.Parent.Extension);                 
