@@ -177,7 +177,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 "AvailableItemName",
                 "Clean",
                 "XamlBuildTaskTypeGenerationExtensionName",
-                "WebPublishExtnsionsToExcludeItem"
+                "WebPublishExtnsionsToExcludeItem",
+                "COMReference"
             };
 
             // if it ends with a / or \ assuem it points to a folder

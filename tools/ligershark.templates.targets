@@ -114,8 +114,15 @@
   </Target>
 
   <Target Name="ls-ProcessItemTemplates" DependsOnTargets="$(ls-ProcessItemTemplatesDependsOn)" />
-  
-  <Target Name="ls-DiscoverItemTemplateFiles">
+  <PropertyGroup>
+    <ls-DiscoverItemTemplateFilesDependsOn>
+      $(ls-DiscoverItemTemplateFilesDependsOn);
+      ls-CoreDiscoverItemTemplateFiles;
+      ls-DiscoverProjectTemplatesFromReferences
+    </ls-DiscoverItemTemplateFilesDependsOn>
+  </PropertyGroup>
+  <Target Name="ls-DiscoverItemTemplateFiles" DependsOnTargets="$(ls-DiscoverItemTemplateFilesDependsOn)" />
+  <Target Name="ls-CoreDiscoverItemTemplateFiles">
     <Message Text="Looking for item and project templates" Importance="high"/>
     <!-- Look through Item Templates folder for all .vstemplate files in the project (as Content) -->
     <ItemGroup>
@@ -157,6 +164,53 @@ Project Templates: @(ls-PT-ToRemove)"/>
     <Message Text="Vs Template Files found: @(ls-VsTemplateFiles,'%0a%0d')" />
   </Target>
 
+  <PropertyGroup>
+    <ls-DiscoverProjectTemplatesFromReferencesDependsOn>
+      $(ls-DiscoverProjectTemplatesFromReferencesDependsOn);
+      ls-MessageForDiscoverProjectTemplatesFromReferences;
+    </ls-DiscoverProjectTemplatesFromReferencesDependsOn>
+  </PropertyGroup>
+  <Target Name="ls-MessageForDiscoverProjectTemplatesFromReferences">
+    <Message Text="Looking for project templates from project references" />
+  </Target>
+  <!--
+  This target will discover project templates which are coming in through
+  as a ProjectReference.
+  
+  This target will be executed once per value in @(ProjectReference)
+  -->
+  <Target Name="ls-DiscoverProjectTemplatesFromReferences" 
+          Outputs="%(ProjectReference.Identity)"
+          DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)">
+
+    <!-- See if there is a _preprocess.xml file in the directory or not -->
+    <PropertyGroup>
+      <_ls-ProjDirectory>%(ProjectReference.RootDir)%(ProjectReference.Directory)</_ls-ProjDirectory>
+      <_ls-ExpectedPreprocessPath>$(_ls-ProjDirectory)_preprocess.xml</_ls-ExpectedPreprocessPath>
+
+      <_ls-ExpectedVsTemplatePath>$(_ls-ProjDirectory)_Definitions\_project.vstemplate.xml</_ls-ExpectedVsTemplatePath>
+    
+      <_ls-FoundPreprocessFile>false</_ls-FoundPreprocessFile>
+      <_ls-FoundPreprocessFile Condition=" Exists('$(_ls-ExpectedPreprocessPath)')=='true' ">true</_ls-FoundPreprocessFile>
+
+      <_ls-FoundVsTemplateFile>false</_ls-FoundVsTemplateFile>
+      <_ls-FoundVsTemplateFile Condition=" Exists('$(_ls-ExpectedVsTemplatePath)')">true</_ls-FoundVsTemplateFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ls-VsNewProjTemplateFiles 
+        Include="$(_ls-ExpectedVsTemplatePath)"
+        Condition=" '$(_ls-FoundPreprocessFile)'=='true' and '$(_ls-FoundVsTemplateFile)'=='true' ">
+        <TemplateType>ProjectTemplate</TemplateType>
+        <TemplatesRoot>$(_ls-ProjDirectory)</TemplatesRoot>
+        <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
+
+        <OutputRoot>ProjectTemplate\</OutputRoot>
+      </ls-VsNewProjTemplateFiles>
+    </ItemGroup>
+        
+  </Target>
+  
   <PropertyGroup>
     <ls-CreateZipForEachItemTemplateDependsOn>
       ls-MessageForCreateZipForEachItemTemplate;
