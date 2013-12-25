@@ -8,6 +8,8 @@
   -->
 
   <PropertyGroup>
+    <UseHostCompilerIfAvailable>false</UseHostCompilerIfAvailable>
+    <CodeContractsEnableRuntimeChecking>false</CodeContractsEnableRuntimeChecking>
     <!-- 
     Constants 
     -->
@@ -353,8 +355,8 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
         <VsTemplateSourcePath>%(ls-VsNewProjTemplateFiles.Identity)</VsTemplateSourcePath>
         <ItemTemplateFolder>$(_ls-TemplateFolder2)</ItemTemplateFolder>
 
-        <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
-        <OutputPathFolder>$(OutputPathFolder)</OutputPathFolder>
+        <OutputPathWithFileName>$(OutputPathWithFileName2)</OutputPathWithFileName>
+        <OutputPathFolder>$(OutputPathFolder2)</OutputPathFolder>
       </_ls-ItemTemplatesOutputs>
     </ItemGroup>
   </Target>
@@ -485,7 +487,6 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <VSIXSourceItem Include="%(_ls-ItemTemplatesOutputs.Identity)">
         <VSIXSubPath>%(_ls-ItemTemplatesOutputs.OutputPathFolder)</VSIXSubPath>
       </VSIXSourceItem>
-
     </ItemGroup>
 
     <Message Text="VSIXSubPath: [%(ls-ItemTempZipIntermediateFiles.OutputPathFolder)]" />    
