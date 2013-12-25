@@ -154,9 +154,11 @@
 
     <ItemGroup Condition=" '$(Configuration)'=='Release' " >
       <!-- If we are not building on release mode let's remove any item starting with _Sample -->
-      <ls-IT-ToRemove Include="$(ls-ItemTemplateRoot)**\_Sample*\_Definitions\*.vstemplate" />
-      <ls-PT-ToRemove Include="$(ls-ProjectTemplateRoot)**\_Sample*\_Definitions\*.vstemplate" />
+      <ls-IT-ToRemove Include="$(ls-ItemTemplateRoot)**\_Sample*\_Definitions\*.vstemplate;$(ls-ItemTemplateRoot)**\_Sample*\_Definitions\_project.vstemplate.xml" />
+      <ls-PT-ToRemove Include="$(ls-ProjectTemplateRoot)**\_Sample*\_Definitions\*.vstemplate;$(ls-ProjectTemplateRoot)**\_Sample*\_Definitions\_project.vstemplate.xml" />
+      
       <ls-VsTemplateFiles Remove="@(ls-IT-ToRemove);@(ls-PT-ToRemove)" />
+      <ls-VsNewProjTemplateFiles Remove="@(ls-IT-ToRemove);@(ls-PT-ToRemove)" />
     </ItemGroup>
     <Message Text="Removed the following Sample templates from the VSIX because build is set to [$(Configuration)]. 
 Item Templates: @(ls-IT-ToRemove)
@@ -182,7 +184,8 @@ Project Templates: @(ls-PT-ToRemove)"/>
   -->
   <Target Name="ls-DiscoverProjectTemplatesFromReferences" 
           Outputs="%(ProjectReference.Identity)"
-          DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)">
+          DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)"
+          Condition=" '@(ProjectReference)'!= '' ">
 
     <!-- See if there is a _preprocess.xml file in the directory or not -->
     <PropertyGroup>
@@ -196,12 +199,22 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
       <_ls-FoundVsTemplateFile>false</_ls-FoundVsTemplateFile>
       <_ls-FoundVsTemplateFile Condition=" Exists('$(_ls-ExpectedVsTemplatePath)')">true</_ls-FoundVsTemplateFile>
-    </PropertyGroup>
 
+      <_ls-FoundRequiredFiles>false</_ls-FoundRequiredFiles>
+      <_ls-FoundRequiredFiles Condition= " '$(_ls-FoundPreprocessFile)'=='true' and '$(_ls-FoundVsTemplateFile)'=='true' ">true</_ls-FoundRequiredFiles>
+
+      <_ls-ProjFileName>%(ProjectReference.FileName)</_ls-ProjFileName>
+      <_ls-IsSample>false</_ls-IsSample>
+      <_ls-IsSample>$(_ls-ProjFileName.StartsWith('_Sample'))</_ls-IsSample>
+
+      <_ls-IncludeTemplate Condition=" '$(_ls-FoundRequiredFiles)'=='true'  ">true</_ls-IncludeTemplate>
+      <_ls-IncludeTemplate Condition=" '$(Configuration)'=='Release' and '$(_ls-IsSample)'=='true' ">false</_ls-IncludeTemplate>
+    </PropertyGroup>
+    
     <ItemGroup>
       <ls-VsNewProjTemplateFiles 
         Include="$(_ls-ExpectedVsTemplatePath)"
-        Condition=" '$(_ls-FoundPreprocessFile)'=='true' and '$(_ls-FoundVsTemplateFile)'=='true' ">
+        Condition=" '$(_ls-IncludeTemplate)'=='true' ">
         <TemplateType>ProjectTemplate</TemplateType>
         <TemplatesRoot>$(_ls-ProjDirectory)</TemplatesRoot>
         <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
@@ -326,7 +339,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
     <PropertyGroup>
       <_ls-pathToFile>%(ls-VsNewProjTemplateFiles.RootDir)%(ls-VsNewProjTemplateFiles.Directory)\..\$(_ls-projFile)</_ls-pathToFile>
-      <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>      
+      <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>
     </PropertyGroup>
     
     <ItemGroup>
