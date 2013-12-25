@@ -18,6 +18,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
         [Required]
         public string DestinationTemplateLocation { get; set; }
 
+        public ITaskItem[] FilesExclude { get; set; }
+
         public List<string> _filesToCopy { get; set; }
 
         [Output]
@@ -101,6 +103,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             var sourceFileNames = new HashSet<string>();
             var targetFileNames = new HashSet<string>();
 
+            List<string> filesToExclude = GetFilesToExlucudeAsList();
             RecurseItems(projectElement, sourceFileNames, targetFileNames);
             _filesToCopy = new List<string>();
             var itemsToMerge = new List<string>();
@@ -117,6 +120,10 @@ namespace LigerShark.TemplateBuilder.Tasks {
                     continue;
                 }
 
+                if (filesToExclude.Contains(lowerName)) {
+                    continue;
+                }
+
                 if(item.ItemType != "Folder") {
                     _filesToCopy.Add(name);
                 }
@@ -124,6 +131,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 if (!sourceFileNames.Contains(lowerName)) {
                     itemsToMerge.Add(name);
                 }
+
             }
 
             Merge(projectElement, itemsToMerge);
@@ -136,7 +144,16 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             return true;
         }
-
+        private List<string> GetFilesToExlucudeAsList() {
+            List<string> filesToExclude = new List<string>();
+            foreach (var item in FilesExclude) {
+                if (item == null || string.IsNullOrEmpty(item.ItemSpec)) {
+                    continue;
+                }
+                filesToExclude.Add(item.ItemSpec.ToLower());
+            }
+            return filesToExclude;
+        }
         private static void MergeTemplateData(XElement target, XElement source, string childName, object defaultValue) {
             var element = source.Element(XName.Get(childName, MSBuildSchema));
             var value = defaultValue;

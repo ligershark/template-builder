@@ -19,6 +19,7 @@
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
     <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.xml</ls-TemplateReportPath>
     <ls-GenerateTemplateReport Condition=" '$(ls-GenerateTemplateReport)'=='' ">true</ls-GenerateTemplateReport>
+    <ls-EnableModifyProjectOnCopyToRemoveTemplateElements Condition=" '$(ls-EnableModifyProjectOnCopyToRemoveTemplateElements)'=='' ">true</ls-EnableModifyProjectOnCopyToRemoveTemplateElements>
     <!-- 
     Item Templates 
     -->
@@ -352,6 +353,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
     
     <ItemGroup>
       <_ls-DestVsTemplateItem Include="$(_ls-DestVsTemplateFullPath)"/>
+      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml"/>
     </ItemGroup>
     <Message Text="
 ls-VsNewProjTemplateFiles.Identity: [%(ls-VsNewProjTemplateFiles.Identity)]
@@ -369,7 +371,8 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     <CreateTemplateTask
       ProjectFile="$(_ls-fullPathToFile)"
       VsTemplateShell="%(ls-VsNewProjTemplateFiles.FullPath)"
-      DestinationTemplateLocation="$(_ls-DestVsTemplateFullPath)">
+      DestinationTemplateLocation="$(_ls-DestVsTemplateFullPath)"
+      FilesExclude="@(ls-ProjectTemplateFilesToRemoveOnCopy)">
       <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
     </CreateTemplateTask>
 
@@ -388,7 +391,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     <!-- There may be some loose TemplateBuilder files that need to be copied if so copy those too -->
     <ItemGroup>
       <_ls-AddlFilesToCopy Remove="@(_ls-AddlFilesToCopy)"/>
-      <_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\*.*proj;"/>
+      <!--<_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\*.*proj;"/>-->
       <_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\_preprocess.xml"/>
     </ItemGroup>
     
@@ -398,7 +401,22 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
           DestinationFiles="@(_ls-AddlFilesToCopy->'$(ls-DestTemplateOutputRoot)%(RecursiveDir)%(Filename)%(Extension)')">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
-   
+
+    <ItemGroup>
+      <_ls-DestProjFile Remove="@(_ls-DestProjFile)"/>
+      <_ls-DestProjFile Include="$(_ls-fullPathToFile)"/>
+      
+    </ItemGroup>
+
+    <!-- Copy the project file to the dest but remove the TemplateBuilder elements during that copy -->
+    <ModifyProject SourceProjectFilePath="$(_ls-fullPathToFile)"
+                   ItemsToRemove="@(ls-ProjectTemplateFilesToRemoveOnCopy)"
+                   DestProjectFilePath="@(_ls-DestProjFile->'$(ls-DestTemplateOutputRoot)%(Filename)%(Extension)')"
+                   Condition=" '$(ls-EnableModifyProjectOnCopyToRemoveTemplateElements)'=='true' "/>
+    <Copy SourceFiles="$(_ls-fullPathToFile)"
+          DestinationFiles="@(_ls-DestProjFile->'$(ls-DestTemplateOutputRoot)%(Filename)%(Extension)')"
+          Condition=" '$(ls-EnableModifyProjectOnCopyToRemoveTemplateElements)'=='false' "/>
+    
     <!-- We need to populate _ls-ItemTemplatesOutputs to ensure the rest of the process is invoked -->
     <ItemGroup>
       <_ls-ItemTemplatesOutputs
@@ -443,8 +461,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     
     <ItemGroup>
       <ls-ItemTempZipIntermediateFiles Include="%(_ls-ItemTemplatesOutputs.Identity)"/>
-    </ItemGroup>
-    
+    </ItemGroup>    
   </Target>
 
   <Target Name="ls-InitalizeItemTemplateOutputFolder">
@@ -682,4 +699,5 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
   <UsingTask TaskName="GetItemTemplateNameFromVSTemplatePath" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>  
   <UsingTask TaskName="ReplaceInFiles" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="CreateTemplateTask" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
+  <UsingTask TaskName="ModifyProject" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
 </Project>
