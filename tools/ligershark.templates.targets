@@ -210,7 +210,12 @@ Project Templates: @(ls-PT-ToRemove)"/>
       <_ls-IncludeTemplate Condition=" '$(_ls-FoundRequiredFiles)'=='true'  ">true</_ls-IncludeTemplate>
       <_ls-IncludeTemplate Condition=" '$(Configuration)'=='Release' and '$(_ls-IsSample)'=='true' ">false</_ls-IncludeTemplate>
     </PropertyGroup>
-    
+
+    <!-- finally remove the projectreference as well -->
+    <Message
+      Text="Removing project reference for template project [%(ProjectReference.Identity)]"
+      Importance="low"
+      Condition=" '$(_ls-FoundRequiredFiles)'=='true' " />
     <ItemGroup>
       <ls-VsNewProjTemplateFiles 
         Include="$(_ls-ExpectedVsTemplatePath)"
@@ -221,8 +226,19 @@ Project Templates: @(ls-PT-ToRemove)"/>
 
         <OutputRoot>ProjectTemplate\</OutputRoot>
       </ls-VsNewProjTemplateFiles>
-    </ItemGroup>
+
+      <!-- 
+        Removing the refernece has the added benefit of not including the build
+        output of these projects into the generated .vsix.
         
+        Also we need to do this because if we do not for some reason Visual Studio
+        gets confused and tries to load up the copy .csproj file in 
+        obj\debug\ls-Templates\...\ instead of the source .csproj file. By removing
+        the reference below it solves this issue as well.
+      -->
+      <ProjectReference Remove="%(ProjectReference.Identity)"
+                        Condition=" '$(_ls-FoundRequiredFiles)'=='true' "/>      
+    </ItemGroup>        
   </Target>
   
   <PropertyGroup>
