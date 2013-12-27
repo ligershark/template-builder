@@ -20,11 +20,19 @@
     <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.xml</ls-TemplateReportPath>
     <ls-GenerateTemplateReport Condition=" '$(ls-GenerateTemplateReport)'=='' ">true</ls-GenerateTemplateReport>
     <ls-EnableModifyProjectOnCopyToRemoveTemplateElements Condition=" '$(ls-EnableModifyProjectOnCopyToRemoveTemplateElements)'=='' ">true</ls-EnableModifyProjectOnCopyToRemoveTemplateElements>
+    
+    <!-- 
+      Instead of using $(IntermediateOutputPath) this new property should be used for template related content.
+      If we copy the .csproj and source files under $(IntermediateOutputPath)\ then Visual Studio gets confused
+      and tries to compile the files under obj\debug\ls-Templates\...\ which have been tokenized.
+      Because of this we need to move this folder out of obj\debug\. I'm making it a sibling folder to obj\Debug
+    -->    
+    <ls-TemplatesIntermediateOutputPath Condition=" '$(ls-TemplatesIntermediateOutputPath)'=='' ">$(BaseIntermediateOutputPath)..\obj-Templates\$(Configuration)\</ls-TemplatesIntermediateOutputPath>
     <!-- 
     Item Templates 
-    -->
+    -->    
     <ls-ItemTemplateRoot Condition=" '$(ls-ItemTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ItemTemplates\</ls-ItemTemplateRoot>
-    <ls-ItemTemplateOutputRoot Condition=" '$(ls-ItemTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-Templates\</ls-ItemTemplateOutputRoot>
+    <ls-ItemTemplateOutputRoot Condition=" '$(ls-ItemTemplateOutputRoot)'=='' ">$(ls-TemplatesIntermediateOutputPath)ls-Templates\</ls-ItemTemplateOutputRoot>
     
     <ls-ItemTemplatesExtendBuild Condition=" '$(ls-ItemTemplatesExtendBuild)'=='' ">true</ls-ItemTemplatesExtendBuild>
     <!-- This is where all the Item Template .zip files will be located -->
@@ -34,7 +42,7 @@
     Project Templates
     -->
     <ls-ProjectTemplateRoot Condition=" '$(ls-ProjectTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ProjectTemplates\</ls-ProjectTemplateRoot>
-    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(IntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
+    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(ls-TemplatesIntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
     <!-- This is where all the Project Template .zip files will be located -->
     <ls-ProjectTemplateZipRootFolder Condition=" '$(ls-ProjectTemplateZipRootFolder)'=='' ">Output\ProjectTemplates\</ls-ProjectTemplateZipRootFolder>
 
@@ -74,8 +82,10 @@
       RemoveTemplateFilesFromCompile;
       $(MarkupCompilePass1DependsOn);
     </MarkupCompilePass1DependsOn>
+
     <CoreCompileDependsOn Condition=" '$(ls-ItemTemplatesExtendBuild)'=='true' ">
       CopyMSBuildFilesToLocalAppData;
+      PrepareTemplatesIntOutput;
       RemoveTemplateFilesFromCompile;
       IncludeSnippetFilesInVsix;
       $(CoreCompileDependsOn);
@@ -90,7 +100,10 @@
       ls-AddCreatedItemTemplateZipFilesToProject;
     </ls-ProcessItemTemplatesDependsOn>
   </PropertyGroup>
-
+  <Target Name="PrepareTemplatesIntOutput">
+    <Message Text="Template intermediate output folder, ls-TemplatesIntermediateOutputPath: $(ls-TemplatesIntermediateOutputPath)" Importance="low"/>
+    <MakeDir Directories="$(ls-TemplatesIntermediateOutputPath)"/>
+  </Target>
   <Target Name="RemoveTemplateFilesFromCompile" BeforeTargets="CoreCompile">
     <Message Text="Removing ItemTemplate and ProjectTemplate files from Compile list" Importance="high"/>
 
