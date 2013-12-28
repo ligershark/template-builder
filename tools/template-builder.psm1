@@ -169,7 +169,8 @@ function AddItemTemplateAssetTagToVisxManfiestIfNotExists(){
     }
     
     [xml]$vsixXml = (Get-Content $vsixFilePathToUpdate)
-    if( ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ItemTemplates'}) ){
+    if( ($vsixXml.PackageManifest.Assets -ne $null) -and 
+        ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ItemTemplates'}) ){
         # if the asset is already there just skip it
         "`t.vsixmanifest not modified because the 'Output\ItemTemplates' element is already in that file" | Write-Host
     }
@@ -180,9 +181,23 @@ function AddItemTemplateAssetTagToVisxManfiestIfNotExists(){
         $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
         $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ItemTemplate')
         $newElement.SetAttribute('Path', 'Output\ItemTemplates')
-        $vsixXml.PackageManifest.Assets.AppendChild($newElement)
+        # $vsixXml.PackageManifest.Assets.AppendChild($newElement)
+        (GetOrCreateAssetsElement -vsixXml $vsixXml).AppendChild($newElement)
         $vsixXml.Save($vsixFilePathToUpdate)
     }
+}
+function GetOrCreateAssetsElement(){
+    param(
+        [Parameter(Mandatory=$true)]
+        $vsixXml
+    )
+    $result = ($vsixXml.PackageManifest.Assets)
+    if($result -eq $null){
+        $newElement = $vsixXml.CreateElement('Assets', $vsixXml.DocumentElement.NamespaceURI)
+        $vsixXml.PackageManifest.AppendChild($newElement)
+        $result = $newElement
+    }
+    return $result
 }
 function AddProjectTemplateAssetTagToVisxManfiestIfNotExists(){
     param(
@@ -207,7 +222,8 @@ function AddProjectTemplateAssetTagToVisxManfiestIfNotExists(){
         $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
         $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ProjectTemplate')
         $newElement.SetAttribute('Path', 'Output\ProjectTemplates')
-        $vsixXml.PackageManifest.Assets.AppendChild($newElement)
+        #$vsixXml.PackageManifest.Assets.AppendChild($newElement)
+        (GetOrCreateAssetsElement -vsixXml $vsixXml).AppendChild($newElement)
         $vsixXml.Save($vsixFilePathToUpdate)
     }
 }
