@@ -25,15 +25,15 @@ namespace LigerShark.TemplateBuilder.Tasks {
         [Output]
         public ITaskItem[] FilesToCopy { get; set; }
 
-        private const string MSBuildSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
+        private const string VsTemplateSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
 
         public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
-            foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", MSBuildSchema))) {
+            foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", VsTemplateSchema))) {
                 takenSourceFileNames.Add(projectItem.Value.ToLower());
                 takenTargetFileNames.Add(projectItem.Attribute(XName.Get("TargetFileName")).Value.ToLower());
             }
 
-            foreach (var folder in projectItemContainer.Elements(XName.Get("Folder", MSBuildSchema))) {
+            foreach (var folder in projectItemContainer.Elements(XName.Get("Folder", VsTemplateSchema))) {
                 var sourceFolderName = folder.Attribute(XName.Get("Name")).Value.ToLower();
                 var targetFolderName = folder.Attribute(XName.Get("TargetFolderName")).Value.ToLower();
 
@@ -56,9 +56,9 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 return false;
             }
 
-            var templateData = new XElement(XName.Get("TemplateData", MSBuildSchema));
+            var templateData = new XElement(XName.Get("TemplateData", VsTemplateSchema));
             workingTemplate.Root.Add(templateData);
-            MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", MSBuildSchema)));
+            MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", VsTemplateSchema)));
 
             var project = new ProjectInstance(ProjectFile);
             var realProjectFile = Path.GetFileName(project.FullPath);
@@ -73,22 +73,22 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 return false;
             }
 
-            var templateContentElement = vstemplate.Root.Element(XName.Get("TemplateContent", MSBuildSchema));
+            var templateContentElement = vstemplate.Root.Element(XName.Get("TemplateContent", VsTemplateSchema));
             XElement projectElement = null;
 
             if (templateContentElement != null) {
-                var element = templateContentElement.Element(XName.Get("Project", MSBuildSchema));
+                var element = templateContentElement.Element(XName.Get("Project", VsTemplateSchema));
 
                 if (element != null) {
                     projectElement = XElement.Parse(element.ToString());
                 }
             }
 
-            templateContentElement = new XElement(XName.Get("TemplateContent", MSBuildSchema));
+            templateContentElement = new XElement(XName.Get("TemplateContent", VsTemplateSchema));
             templateContentElement.Add(projectElement);
 
             if (projectElement == null) {
-                projectElement = new XElement(XName.Get("Project", MSBuildSchema));
+                projectElement = new XElement(XName.Get("Project", VsTemplateSchema));
                 templateContentElement.Add(projectElement);
             }
             else {
@@ -134,6 +134,20 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             }
 
+            // This is a temporary fix to preserve WizardExtension/WizardData elements
+            //  in the .vstemplate file. We need a more generic method to preserve
+            //  elements like these.
+            XNamespace vsTemplateNs = VsTemplateSchema;
+            var wizExt = vstemplate.Root.Element(vsTemplateNs + "WizardExtension");
+            var wizData = vstemplate.Root.Element(vsTemplateNs + "WizardData");
+
+            if (wizExt != null) {
+                workingTemplate.Root.Add(wizExt);
+            }
+            if (wizData != null) {
+                workingTemplate.Root.Add(wizData);
+            }
+
             Merge(projectElement, itemsToMerge);
             workingTemplate.Save(DestinationTemplateLocation);
 
@@ -155,14 +169,14 @@ namespace LigerShark.TemplateBuilder.Tasks {
             return filesToExclude;
         }
         private static void MergeTemplateData(XElement target, XElement source, string childName, object defaultValue) {
-            var element = source.Element(XName.Get(childName, MSBuildSchema));
+            var element = source.Element(XName.Get(childName, VsTemplateSchema));
             var value = defaultValue;
 
             if (element != null) {
                 value = element.Value;
             }
 
-            target.Add(new XElement(XName.Get(childName, MSBuildSchema), value));
+            target.Add(new XElement(XName.Get(childName, VsTemplateSchema), value));
         }
 
         private static void MergeTemplateData(XElement workingTemplate, XElement source) {
@@ -215,10 +229,10 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 var workingElement = rootElement;
 
                 for (var i = 0; i < fileParts.Length - 1; ++i) {
-                    var newWorkingElement = workingElement.Elements(XName.Get("Folder", MSBuildSchema)).FirstOrDefault(x => string.Equals(x.Attribute(XName.Get("TargetFolderName")).Value, fileParts[i], StringComparison.OrdinalIgnoreCase));
+                    var newWorkingElement = workingElement.Elements(XName.Get("Folder", VsTemplateSchema)).FirstOrDefault(x => string.Equals(x.Attribute(XName.Get("TargetFolderName")).Value, fileParts[i], StringComparison.OrdinalIgnoreCase));
 
                     if (newWorkingElement == null) {
-                        newWorkingElement = new XElement(XName.Get("Folder", MSBuildSchema));
+                        newWorkingElement = new XElement(XName.Get("Folder", VsTemplateSchema));
                         newWorkingElement.Add(new XAttribute(XName.Get("Name"), fileParts[i]));
                         newWorkingElement.Add(new XAttribute(XName.Get("TargetFolderName"), fileParts[i]));
                         workingElement.Add(newWorkingElement);
@@ -230,7 +244,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 }
 
                 if (!string.IsNullOrWhiteSpace(fileParts[fileParts.Length - 1])) {
-                    var fileElement = new XElement(XName.Get("ProjectItem", MSBuildSchema), fileParts[fileParts.Length - 1]);
+                    var fileElement = new XElement(XName.Get("ProjectItem", VsTemplateSchema), fileParts[fileParts.Length - 1]);
                     fileElement.Add(new XAttribute(XName.Get("ReplaceParameters"), true));
                     fileElement.Add(new XAttribute(XName.Get("TargetFileName"), fileParts[fileParts.Length - 1]));
                     workingElement.Add(fileElement);
