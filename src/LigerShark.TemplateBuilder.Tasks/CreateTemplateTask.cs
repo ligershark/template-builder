@@ -134,18 +134,13 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             }
 
-            // This is a temporary fix to preserve WizardExtension/WizardData elements
-            //  in the .vstemplate file. We need a more generic method to preserve
-            //  elements like these.
-            XNamespace vsTemplateNs = VsTemplateSchema;
-            var wizExt = vstemplate.Root.Element(vsTemplateNs + "WizardExtension");
-            var wizData = vstemplate.Root.Element(vsTemplateNs + "WizardData");
+            //Copy all non-mutated sections
+            var mutatedTemplateSections = new[] {"TemplateContent", "TemplateData"};
+            var elementsToCopyDirectly = vstemplate.Root.Elements().Where(x => !mutatedTemplateSections.Contains(x.Name.LocalName));
 
-            if (wizExt != null) {
-                workingTemplate.Root.Add(wizExt);
-            }
-            if (wizData != null) {
-                workingTemplate.Root.Add(wizData);
+            foreach (var element in elementsToCopyDirectly) {
+                var clonedElement = XElement.Parse(element.ToString());
+                workingTemplate.Add(clonedElement);
             }
 
             Merge(projectElement, itemsToMerge);
@@ -160,12 +155,16 @@ namespace LigerShark.TemplateBuilder.Tasks {
         }
         private List<string> GetFilesToExlucudeAsList() {
             List<string> filesToExclude = new List<string>();
-            foreach (var item in FilesExclude) {
-                if (item == null || string.IsNullOrEmpty(item.ItemSpec)) {
-                    continue;
+
+            if (FilesExclude != null) {
+                foreach (var item in FilesExclude) {
+                    if (item == null || string.IsNullOrEmpty(item.ItemSpec)) {
+                        continue;
+                    }
+                    filesToExclude.Add(item.ItemSpec.ToLower());
                 }
-                filesToExclude.Add(item.ItemSpec.ToLower());
             }
+
             return filesToExclude;
         }
         private static void MergeTemplateData(XElement target, XElement source, string childName, object defaultValue) {
