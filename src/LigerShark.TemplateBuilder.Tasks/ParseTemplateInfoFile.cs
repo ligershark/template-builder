@@ -76,7 +76,7 @@
                 Log.LogError("Unable to parse template info file [{0}]. Details=[{1}]",FilePath,ex.ToString());
                 return false;
             }
-            return true;
+
             return Success;
         }
     }

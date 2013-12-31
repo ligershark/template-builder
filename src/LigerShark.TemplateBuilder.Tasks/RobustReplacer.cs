@@ -85,7 +85,7 @@
                 try {
                     paths = Directory.GetFiles(dir, searchPattern);
                 }
-                catch(Exception ex) { } // swallow
+                catch(Exception) { } // swallow
 
                 if (paths != null && paths.Length > 0) {
                     foreach (string file in paths) {
@@ -98,7 +98,7 @@
                 try {
                     paths = Directory.GetDirectories(dir);
                 }
-                catch(Exception ex) { } // swallow
+                catch(Exception) { } // swallow
 
                 if (paths != null && paths.Length > 0) {
                     foreach (string subDir in paths) {

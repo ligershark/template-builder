@@ -219,10 +219,14 @@ namespace LigerShark.TemplateBuilder.Tasks {
         private bool IsPotentialSourceFile(ProjectItemInstance item) {
             var nonFileTypes = GetNonFileTypesList();
 
-            // if it ends with a / or \ assuem it points to a folder
+            // TODO: we need to change the logic here. By using project.Items we are
+            //  getting a lot more than just source files. For example in some cases ls-BuildAssemblies comes thru
+
+            // if it ends with a / or \ assume it points to a folder
             string include = item.EvaluatedInclude ?? string.Empty;
 
             return !item.ItemType.StartsWith("_")
+                        && !item.ItemType.StartsWith("ls-")
                         && !nonFileTypes.Contains(item.ItemType)
                         && !include.EndsWith(@"/")
                         && !include.EndsWith(@"\");
