@@ -9,6 +9,7 @@ using Microsoft.Build.Utilities;
 
 namespace LigerShark.TemplateBuilder.Tasks {
     public class CreateTemplateTask : Task {
+        
         [Required]
         public string ProjectFile { get; set; }
 
@@ -22,10 +23,31 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
         public List<string> _filesToCopy { get; set; }
 
+        public ITaskItem[] NonFileTypes { get; set; }
+
         [Output]
         public ITaskItem[] FilesToCopy { get; set; }
 
         private const string VsTemplateSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
+
+        private List<string> DefaultNonFileTypesList;
+        public CreateTemplateTask() {
+            this.DefaultNonFileTypesList = new List<string> {
+                "Reference",
+                "AppConfigFileDestination",
+                "IntermediateAssembly",
+                "ApplicationManifest",
+                "DeployManifest",
+                "BuiltProjectOutputGroupKeyOutput",
+                "DebugSymbolsProjectOutputGroupOutput",
+                "AvailableItemName",
+                "Clean",
+                "XamlBuildTaskTypeGenerationExtensionName",
+                "WebPublishExtnsionsToExcludeItem",
+                "COMReference",
+                "DocumentationProjectOutputGroupOutput"
+            };
+        }
 
         public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
             foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", VsTemplateSchema))) {
@@ -194,23 +216,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
             MergeTemplateData(workingTemplate, source, "NumberOfParentCategoriesToRollUp", 1);
         }
 
-        private static bool IsPotentialSourceFile(ProjectItemInstance item) {
-            var nonFileTypes = new List<string>
-            {
-                "Reference",
-                "AppConfigFileDestination",
-                "IntermediateAssembly",
-                "ApplicationManifest",
-                "DeployManifest",
-                "BuiltProjectOutputGroupKeyOutput",
-                "DebugSymbolsProjectOutputGroupOutput",
-                "AvailableItemName",
-                "Clean",
-                "XamlBuildTaskTypeGenerationExtensionName",
-                "WebPublishExtnsionsToExcludeItem",
-                "COMReference",
-                "DocumentationProjectOutputGroupOutput"
-            };
+        private bool IsPotentialSourceFile(ProjectItemInstance item) {
+            var nonFileTypes = GetNonFileTypesList();
 
             // if it ends with a / or \ assuem it points to a folder
             string include = item.EvaluatedInclude ?? string.Empty;
@@ -249,6 +256,25 @@ namespace LigerShark.TemplateBuilder.Tasks {
                     workingElement.Add(fileElement);
                 }
             }
+        }
+
+        private IList<string> GetNonFileTypesList() {
+            List<string> nonFileTypesList = new List<string>();
+
+            if (this.NonFileTypes != null) {
+                this.NonFileTypes.ToList().ForEach(item => {
+                    string spec = item.ItemSpec;
+                    if (!string.IsNullOrEmpty(spec)) {
+                        string cleanedUpSpec = spec.Trim().TrimStart(';').TrimEnd(';');
+                        nonFileTypesList.Add(cleanedUpSpec);
+                    }
+                });
+            }
+            else {
+                nonFileTypesList.AddRange(DefaultNonFileTypesList);
+            }
+
+            return nonFileTypesList;
         }
     }
 }

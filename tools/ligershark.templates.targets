@@ -53,15 +53,31 @@
     
     <ls-MSBuildLibPathLocal Condition=" '$(ls-MSBuildLibPathLocal)'=='' ">$(LocalAppData)\Microsoft\MSBuild\TemplateBuilder\v1.0.0.0\</ls-MSBuildLibPathLocal>
     <ls-MSBuildLibPath Condition=" '$(ls-MSBuildLibPath)'=='' ">$(MSBuildThisFileDirectory)</ls-MSBuildLibPath>
-  </PropertyGroup>
-  
-  <PropertyGroup>
+
     <ls-VsTemplateXmlSchema Condition=" '$(ls-VsTemplateXmlSchema)'=='' ">http://schemas.microsoft.com/developer/vstemplate/2005</ls-VsTemplateXmlSchema>
     <ls-UseHardLinksForItemTemplatesCopy Condition=" '$(ls-UseHardLinksForItemTemplatesCopy)'=='' ">false</ls-UseHardLinksForItemTemplatesCopy>
   </PropertyGroup>
 
   <ItemGroup>
     <ls-BuildAssemblies Include="$(ls-MSBuildLibPath)*.dll"/>
+    <!-- 
+    For project templates (new ones) files with these item types will be ignored when ouputting
+    the files to be copied in the template.
+    -->
+    <ls-NonFileTypes Include="
+                     Reference;
+                     AppConfigFileDestination;
+                     IntermediateAssembly;
+                     ApplicationManifest;
+                     DeployManifest;
+                     BuiltProjectOutputGroupKeyOutput;
+                     DebugSymbolsProjectOutputGroupOutput;
+                     AvailableItemName;
+                     Clean;
+                     XamlBuildTaskTypeGenerationExtensionName;
+                     WebPublishExtnsionsToExcludeItem;
+                     COMReference;
+                     DocumentationProjectOutputGroupOutput"/>
   </ItemGroup>
   <Target Name="CopyMSBuildFilesToLocalAppData"
           Inputs="@(ls-BuildAssemblies)"
@@ -414,7 +430,8 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       ProjectFile="$(_ls-fullPathToFile)"
       VsTemplateShell="%(ls-VsNewProjTemplateFiles.FullPath)"
       DestinationTemplateLocation="$(_ls-DestVsTemplateFullPath)"
-      FilesExclude="@(ls-ProjectTemplateFilesToRemoveOnCopy)">
+      FilesExclude="@(ls-ProjectTemplateFilesToRemoveOnCopy)"
+      NonFileTypes="@(ls-NonFileTypes)">
       <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
     </CreateTemplateTask>
 
