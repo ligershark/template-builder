@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Microsoft.Build.Construction;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
@@ -82,7 +83,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             workingTemplate.Root.Add(templateData);
             MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", VsTemplateSchema)));
 
-            var project = new ProjectInstance(ProjectFile);
+            var project = ProjectRootElement.Open(ProjectFile);
             var realProjectFile = Path.GetFileName(project.FullPath);
 
             if (realProjectFile == null) {
@@ -135,7 +136,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                     continue;
                 }
 
-                var name = item.EvaluatedInclude;
+                var name = item.Include;
                 var lowerName = name.ToLower();
 
                 if (targetFileNames.Contains(lowerName)) {
@@ -216,14 +217,10 @@ namespace LigerShark.TemplateBuilder.Tasks {
             MergeTemplateData(workingTemplate, source, "NumberOfParentCategoriesToRollUp", 1);
         }
 
-        private bool IsPotentialSourceFile(ProjectItemInstance item) {
+        private bool IsPotentialSourceFile(ProjectItemElement item) {
             var nonFileTypes = GetNonFileTypesList();
 
-            // TODO: we need to change the logic here. By using project.Items we are
-            //  getting a lot more than just source files. For example in some cases ls-BuildAssemblies comes thru
-
-            // if it ends with a / or \ assume it points to a folder
-            string include = item.EvaluatedInclude ?? string.Empty;
+            string include = item.Include ?? string.Empty;
 
             return !item.ItemType.StartsWith("_")
                         && !item.ItemType.StartsWith("ls-")
