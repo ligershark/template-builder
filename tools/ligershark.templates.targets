@@ -80,7 +80,8 @@
                      XamlBuildTaskTypeGenerationExtensionName;
                      WebPublishExtnsionsToExcludeItem;
                      COMReference;
-                     DocumentationProjectOutputGroupOutput"/>
+                     DocumentationProjectOutputGroupOutput;
+                     XapFilesInputCollection"/>
   </ItemGroup>
   <Target Name="CopyMSBuildFilesToLocalAppData"
           Inputs="@(ls-BuildAssemblies)"
