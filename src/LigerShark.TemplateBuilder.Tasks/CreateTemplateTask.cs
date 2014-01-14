@@ -163,7 +163,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             foreach (var element in elementsToCopyDirectly) {
                 var clonedElement = XElement.Parse(element.ToString());
-                workingTemplate.Add(clonedElement);
+                workingTemplate.Root.Add(clonedElement);
             }
 
             Merge(projectElement, itemsToMerge);
