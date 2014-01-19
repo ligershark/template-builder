@@ -10,7 +10,6 @@ using Microsoft.Build.Utilities;
 namespace LigerShark.TemplateBuilder.Tasks {
     public class CreateTemplateTask : Task {
         
-        [Required]
         public string ProjectFile { get; set; }
 
         [Required]
@@ -25,6 +24,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
         public ITaskItem[] NonFileTypes { get; set; }
 
+        public bool UpdateProjectElement { get; set; }
         [Output]
         public ITaskItem[] FilesToCopy { get; set; }
 
@@ -34,6 +34,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
         public CreateTemplateTask() {
             this.DefaultNonFileTypesList = new List<string> {
                 "Reference",
+                "ProjectReference",
                 "AppConfigFileDestination",
                 "IntermediateAssembly",
                 "ApplicationManifest",
@@ -47,6 +48,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 "COMReference",
                 "DocumentationProjectOutputGroupOutput"
             };
+
+            UpdateProjectElement = true;
         }
 
         public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
@@ -70,6 +73,20 @@ namespace LigerShark.TemplateBuilder.Tasks {
             RecurseItems(projectItemContainer, null, null, takenSourceFileNames, takenTargetFileNames);
         }
 
+        private string GetProjectFile(XDocument vstemplate) {
+            string result = ProjectFile;
+
+            if (string.IsNullOrEmpty(result) && vstemplate != null) {
+                XNamespace ns = @"http://schemas.microsoft.com/developer/vstemplate/2005";
+                string projfilename = vstemplate.Root.Element(ns + "TemplateContent").Element(ns + "Project").Attribute("File").Value;
+                // assume that this is a relative path to the .vstemplate file passed in
+
+                FileInfo vsTemplateFi = new FileInfo(VsTemplateShell);
+                result = System.IO.Path.Combine(vsTemplateFi.Directory.FullName, projfilename);
+            }
+
+            return result;            
+        }
         public override bool Execute() {
             var vstemplate = XDocument.Load(VsTemplateShell);
             var workingTemplate = XDocument.Parse(@"<VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""Project"" />");
@@ -82,7 +99,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             workingTemplate.Root.Add(templateData);
             MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", VsTemplateSchema)));
 
-            var project = new ProjectInstance(ProjectFile);
+            var project = new ProjectInstance(GetProjectFile(vstemplate));
             var realProjectFile = Path.GetFileName(project.FullPath);
 
             if (realProjectFile == null) {
@@ -113,13 +130,22 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 projectElement = new XElement(XName.Get("Project", VsTemplateSchema));
                 templateContentElement.Add(projectElement);
             }
-            else {
-                projectElement.RemoveAttributes();
+            //else {
+            //    projectElement.RemoveAttributes();
+            //}
+            // instead of calling RemoveAttribute and then Add we can just call SetAttributeValue below so that we don't
+            // remove any attributes we are not aware of
+
+
+            if (UpdateProjectElement) {                
+                projectElement.SetAttributeValue(XName.Get("TargetFileName"), "$safeprojectname$" + projectExtension);
+                projectElement.SetAttributeValue(XName.Get("File"), realProjectFile);
+                projectElement.SetAttributeValue(XName.Get("ReplaceParameters"), true);
             }
 
-            projectElement.Add(new XAttribute(XName.Get("TargetFileName"), "$projectname$" + projectExtension));
-            projectElement.Add(new XAttribute(XName.Get("File"), realProjectFile));
-            projectElement.Add(new XAttribute(XName.Get("ReplaceParameters"), true));
+            // projectElement.Add(new XAttribute(XName.Get("TargetFileName"), "$safeprojectname$" + projectExtension));
+            // projectElement.Add(new XAttribute(XName.Get("File"), realProjectFile));
+            // projectElement.Add(new XAttribute(XName.Get("ReplaceParameters"), true));
 
             workingTemplate.Root.Add(templateContentElement);
             var sourceFileNames = new HashSet<string>();
@@ -162,7 +188,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             foreach (var element in elementsToCopyDirectly) {
                 var clonedElement = XElement.Parse(element.ToString());
-                workingTemplate.Add(clonedElement);
+                workingTemplate.Root.Add(clonedElement);
+                // workingTemplate.Add(clonedElement);
             }
 
             Merge(projectElement, itemsToMerge);

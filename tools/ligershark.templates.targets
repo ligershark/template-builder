@@ -20,7 +20,8 @@
     <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.xml</ls-TemplateReportPath>
     <ls-GenerateTemplateReport Condition=" '$(ls-GenerateTemplateReport)'=='' ">true</ls-GenerateTemplateReport>
     <ls-EnableModifyProjectOnCopyToRemoveTemplateElements Condition=" '$(ls-EnableModifyProjectOnCopyToRemoveTemplateElements)'=='' ">true</ls-EnableModifyProjectOnCopyToRemoveTemplateElements>
-    
+    <ls-EnableMultiProjExpandVsTemplateFiles Condition=" '$(ls-EnableMultiProjExpandVsTemplateFiles)'=='' ">true</ls-EnableMultiProjExpandVsTemplateFiles>
+      <!--ls-MultiProjExpandVsTemplateFiles=""-->
     <!-- 
       Instead of using $(IntermediateOutputPath) this new property should be used for template related content.
       If we copy the .csproj and source files under $(IntermediateOutputPath)\ then Visual Studio gets confused
@@ -30,7 +31,7 @@
       Note: turns out it doesn't matter where we stick the output, VS still tries to pick it up. Moving back
       under obj\Debug.
     -->    
-    <ls-TemplatesIntermediateOutputPath Condition=" '$(ls-TemplatesIntermediateOutputPath)'=='' ">$(IntermediateOutputPath)obj-Templates\$(Configuration)\</ls-TemplatesIntermediateOutputPath>
+    <ls-TemplatesIntermediateOutputPath Condition=" '$(ls-TemplatesIntermediateOutputPath)'=='' ">$(IntermediateOutputPath)</ls-TemplatesIntermediateOutputPath>
     <!-- 
     Item Templates 
     -->    
@@ -45,7 +46,7 @@
     Project Templates
     -->
     <ls-ProjectTemplateRoot Condition=" '$(ls-ProjectTemplateRoot)'=='' ">$(MSBuildProjectDirectory)\ProjectTemplates\</ls-ProjectTemplateRoot>
-    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(ls-TemplatesIntermediateOutputPath)ls-ProjectTemplates\</ls-ProjectTemplateOutputRoot>
+    <ls-ProjectTemplateOutputRoot Condition=" '$(ls-ProjectTemplateOutputRoot)'=='' ">$(ls-TemplatesIntermediateOutputPath)ls-Templates\ProjectTemplate\</ls-ProjectTemplateOutputRoot>
     <!-- This is where all the Project Template .zip files will be located -->
     <ls-ProjectTemplateZipRootFolder Condition=" '$(ls-ProjectTemplateZipRootFolder)'=='' ">Output\ProjectTemplates\</ls-ProjectTemplateZipRootFolder>
 
@@ -69,6 +70,7 @@
     -->
     <ls-NonFileTypes Include="
                      Reference;
+                     ProjectReference;
                      AppConfigFileDestination;
                      IntermediateAssembly;
                      ApplicationManifest;
@@ -579,19 +581,6 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
         <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
         <OutputPathFolder>$(OutputPathFolder)</OutputPathFolder>
       </_ls-ItemTemplatesOutputs>
-
-      <!--<_ls-ProjectTemplatesOutputs
-        Include="@(ls-VsTemplateFiles->'$(ls-ItemTemplateOutputRoot)%(OutputRoot)$(_ls-ItemTemplateName).zip')"
-        Condition=" '%(ls-VsTemplateFiles.TemplateType)'=='ProjectTemplate' ">
-        <OutputRoot>%(ls-VsTemplateFiles.TemplateType)\</OutputRoot>
-        <TemplateType>%(ls-VsTemplateFiles.TemplateType)</TemplateType>
-        <ItemTemplateName>$(_ls-ItemTemplateName)</ItemTemplateName>
-        <VsTemplateSourcePath>%(ls-VsTemplateFiles.Identity)</VsTemplateSourcePath>
-        <ItemTemplateFolder>$(_ls-ItemTemplateFolder)</ItemTemplateFolder>
-
-        <OutputPathWithFileName>$(OutputPathWithFileName)</OutputPathWithFileName>
-        <OutputPathFolder>$(OutputPathFolder)</OutputPathFolder>
-      </_ls-ProjectTemplatesOutputs>-->
     </ItemGroup>
 
     <Message Text="
@@ -602,9 +591,55 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     _ls-ItemTemplatesOutputs.VsTemplateSourcePath: [%(_ls-ItemTemplatesOutputs.VsTemplateSourcePath)]
     _ls-ItemTemplatesOutputs.ItemTemplateFolder: [%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)]
     _ls-ItemTemplatesOutputs.OutputPathWithFileName:[%(_ls-ItemTemplatesOutputs.ItemTemplateFolder)]
-    _ls-ItemTemplatesOutputs.OutputPathFolder:[%(_ls-ItemTemplatesOutputs.OutputPathFolder)]"/>
+    _ls-ItemTemplatesOutputs.OutputPathFolder:[%(_ls-ItemTemplatesOutputs.OutputPathFolder)]" Importance="low"/>
   </Target>
 
+  <!--
+  For multi-projects we need to expand the mytemplate.vstemplate file so that it will contain
+  the full list of files. This target is called after all files are copied to the templates
+  temp folder.
+  -->
+  <Target Name="ls-MultiProjExpandVsTemplateFiles" 
+          DependsOnTargets="$(ls-MultiProjExpandVsTemplateFilesDependsOn)"
+          Condition=" '$(ls-EnableMultiProjExpandVsTemplateFiles)'=='true' " />
+  <PropertyGroup>
+    <ls-MultiProjExpandVsTemplateFilesDependsOn>
+      ls-CopyTemplateFilesToIntermediateFolder;
+      $(ls-MultiProjExpandVsTemplateFilesDependsOn);
+      ls-MultiProjDiscoverTemplateFilesToExpand;
+      ls-CoreMultiProjExpandVsTemplateFile;
+    </ls-MultiProjExpandVsTemplateFilesDependsOn>
+  </PropertyGroup>
+  <!--
+    This target is called once per value in @(ls-MultiProjTemplateFilesToExpand.Identity)
+  -->
+  <Target Name="ls-CoreMultiProjExpandVsTemplateFile" 
+          DependsOnTargets="ls-MultiProjDiscoverTemplateFilesToExpand"
+          Outputs="%(ls-MultiProjTemplateFilesToExpand.Identity)"
+          Condition=" '$(ls-EnableMultiProjExpandVsTemplateFiles)'=='true' and '@(ls-MultiProjTemplateFilesToExpand)'!='' ">
+    <!-- 
+    Now we will call the CreateTemplateTask on the mytemplate.vstemplate files. 
+    Source and dest will both point to the mystemplate.vstemplate file in the templates temp folder.
+    -->
+    <CreateTemplateTask
+      VsTemplateShell="%(ls-MultiProjTemplateFilesToExpand.FullPath)"
+      DestinationTemplateLocation="%(ls-MultiProjTemplateFilesToExpand.FullPath)"
+      FilesExclude="@(ls-ProjectTemplateFilesToRemoveOnCopy)"
+      NonFileTypes="@(ls-NonFileTypes)"
+      UpdateProjectElement="false"
+      />
+  </Target>
+  <Target Name="ls-MultiProjDiscoverTemplateFilesToExpand">
+    <Message Text="Expanding mytemplate.vstemplate files for multi-project templates" Importance="high"/>
+    
+    <ItemGroup>
+      <ls-MultiProjTemplateFilesToExpand Include="$(ls-ProjectTemplateOutputRoot)**\MyTemplate.vstemplate"/>
+    </ItemGroup>
+
+    <Message Text="ls-MultiProjTemplateFilesToExpand: @(ls-MultiProjTemplateFilesToExpand)" 
+             Importance="low"/>
+  </Target>
+  
   <PropertyGroup>
     <ls-AddCreatedItemTemplateZipFilesToProjectDependsOn>
       $(ls-AddCreatedItemTemplateZipFilesToProjectDependsOn);
@@ -615,7 +650,6 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
   <Target Name="ls-AddCreatedItemTemplateZipFilesToProject" DependsOnTargets="$(ls-AddCreatedItemTemplateZipFilesToProjectDependsOn)" >
     <Message Text="Adding the following files to Content: [@(ls-ItemTempZipIntermediateFiles)]" />
     
-    <!-- TODO: add this to VSIXSourceItem-->
     <!-- Add the produced .zip files to Content so that they are included in the package -->
     <ItemGroup>
       <VSIXSourceItem Include="%(_ls-ItemTemplatesOutputs.Identity)">
@@ -634,6 +668,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       $(ls-PreprocessTemplatesDependsOn);
       ls-PreprocessDiscoverTempInfoFiles;
       ls-PreprocessEachTemplateInfoFile;
+      ls-MultiProjExpandVsTemplateFiles;
     </ls-PreprocessTemplatesDependsOn>
   </PropertyGroup>
   <Target Name="ls-PreprocessTemplates" DependsOnTargets="$(ls-PreprocessTemplatesDependsOn)"/>
