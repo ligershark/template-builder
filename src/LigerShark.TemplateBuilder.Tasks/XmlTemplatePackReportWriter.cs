@@ -81,7 +81,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             // compute the relative path
             // http://stackoverflow.com/questions/703281/getting-path-relative-to-the-current-working-directory
-            Uri reportFolderUri = new Uri(reportPathFileInfo.Directory.FullName);
+            Uri reportFolderUri = new Uri(reportPathFileInfo.Directory.FullName + @"/");
             Uri templatePathUri = new Uri(templatePath);
 
             string relPath = Uri.UnescapeDataString(
