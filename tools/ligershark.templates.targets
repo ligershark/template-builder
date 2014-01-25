@@ -30,7 +30,7 @@
       Note: turns out it doesn't matter where we stick the output, VS still tries to pick it up. Moving back
       under obj\Debug.
     -->    
-    <ls-TemplatesIntermediateOutputPath Condition=" '$(ls-TemplatesIntermediateOutputPath)'=='' ">$(IntermediateOutputPath)obj-Templates\$(Configuration)\</ls-TemplatesIntermediateOutputPath>
+    <ls-TemplatesIntermediateOutputPath Condition=" '$(ls-TemplatesIntermediateOutputPath)'=='' ">$(IntermediateOutputPath)</ls-TemplatesIntermediateOutputPath>
     <!-- 
     Item Templates 
     -->    
@@ -440,11 +440,14 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
 
     <Message Text="_ls-NewProjFilesToCopyRaw: @(_ls-NewProjFilesToCopyRaw)" Importance="low"/>
     
-    <!-- Copy the .vstemplate file to the dest -->
-    <!--<Copy SourceFiles="%(ls-VsNewProjTemplateFiles.Identity)"
-          DestinationFiles="">
-      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
-    </Copy>-->
+    <!-- 
+    Copy over any files that might be referenced by 
+    .vstemplate file but not in project (i.e. images) 
+    -->
+    <ItemGroup>
+
+    </ItemGroup>
+    
     <Copy SourceFiles="@(_ls-NewProjFilesToCopyRaw->'$(_ls-TemplateFolder2)%(Identity)')"
           DestinationFiles="@(_ls-NewProjFilesToCopyRaw->'$(ls-DestTemplateOutputRoot)%(Identity)')">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
