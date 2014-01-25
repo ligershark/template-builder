@@ -90,7 +90,7 @@
     <Copy SourceFiles="@(ls-BuildAssemblies)"
           DestinationFiles="@(ls-BuildAssemblies->'$(ls-MSBuildLibPathLocal)%(FileName)%(Extension)')"
           Condition="!Exists('$(ls-MSBuildLibPathLocal)%(ls-BuildAssemblies.FileName)%(ls-BuildAssemblies.Extension)')"
-          />    
+          />
   </Target>
 
   <UsingTask AssemblyFile="$(ls-MSBuildLibPathLocal)MSBuild.ExtensionPack.dll" TaskName="MSBuild.ExtensionPack.Compression.Zip" />
@@ -203,18 +203,63 @@ Project Templates: @(ls-PT-ToRemove)"/>
     <ls-DiscoverProjectTemplatesFromReferencesDependsOn>
       $(ls-DiscoverProjectTemplatesFromReferencesDependsOn);
       ls-MessageForDiscoverProjectTemplatesFromReferences;
+      ls-DiscoverProjectTemplatesFromProjectReferences;
+      ls-DiscoverProjectTemplatesFromTemplateReferences;
     </ls-DiscoverProjectTemplatesFromReferencesDependsOn>
   </PropertyGroup>
   <Target Name="ls-MessageForDiscoverProjectTemplatesFromReferences">
     <Message Text="Looking for project templates from project references" />
   </Target>
+  <Target Name="ls-DiscoverProjectTemplatesFromReferences" DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)"/>
+
+  <Target Name="ls-DiscoverProjectTemplatesFromTemplateReferences"
+          Outputs="%(TemplateReference.Identity)"
+          Condition=" '@(TemplateReference)'!= '' ">
+    <!-- See if there is a _preprocess.xml file in the directory or not -->
+    <PropertyGroup>
+      <_ls-ProjDirectory>%(TemplateReference.RootDir)%(TemplateReference.Directory)</_ls-ProjDirectory>
+      <_ls-ExpectedPreprocessPath>$(_ls-ProjDirectory)_preprocess.xml</_ls-ExpectedPreprocessPath>
+
+      <_ls-ExpectedVsTemplatePath>$(_ls-ProjDirectory)_Definitions\_project.vstemplate.xml</_ls-ExpectedVsTemplatePath>
+
+      <_ls-FoundPreprocessFile>false</_ls-FoundPreprocessFile>
+      <_ls-FoundPreprocessFile Condition=" Exists('$(_ls-ExpectedPreprocessPath)')=='true' ">true</_ls-FoundPreprocessFile>
+
+      <_ls-FoundVsTemplateFile>false</_ls-FoundVsTemplateFile>
+      <_ls-FoundVsTemplateFile Condition=" Exists('$(_ls-ExpectedVsTemplatePath)')">true</_ls-FoundVsTemplateFile>
+
+      <_ls-FoundRequiredFiles>false</_ls-FoundRequiredFiles>
+      <_ls-FoundRequiredFiles Condition= " '$(_ls-FoundPreprocessFile)'=='true' and '$(_ls-FoundVsTemplateFile)'=='true' ">true</_ls-FoundRequiredFiles>
+
+      <_ls-ProjFileName>%(TemplateReference.FileName)</_ls-ProjFileName>
+      <_ls-IsSample>false</_ls-IsSample>
+      <_ls-IsSample>$(_ls-ProjFileName.StartsWith('_Sample'))</_ls-IsSample>
+
+      <_ls-IncludeTemplate Condition=" '$(_ls-FoundRequiredFiles)'=='true'  ">true</_ls-IncludeTemplate>
+      <_ls-IncludeTemplate Condition=" '$(Configuration)'=='Release' and '$(_ls-IsSample)'=='true' ">false</_ls-IncludeTemplate>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ls-VsNewProjTemplateFiles
+        Include="$(_ls-ExpectedVsTemplatePath)"
+        Condition=" '$(_ls-IncludeTemplate)'=='true' ">
+        <TemplateType>ProjectTemplate</TemplateType>
+        <TemplatesRoot>$(_ls-ProjDirectory)</TemplatesRoot>
+        <ZipRootFolder>$(ls-ProjectTemplateZipRootFolder)</ZipRootFolder>
+
+        <OutputRoot>ProjectTemplate\</OutputRoot>
+      </ls-VsNewProjTemplateFiles>
+    </ItemGroup>    
+  </Target>
   <!--
   This target will discover project templates which are coming in through
   as a ProjectReference.
   
-  This target will be executed once per value in @(ProjectReference)
+  This target will be executed once per value in @(ProjectReference).
+  
+  NOTE: This is Deprectated, we should use TemplateReference instead of ProjectReference
   -->
-  <Target Name="ls-DiscoverProjectTemplatesFromReferences" 
+  <Target Name="ls-DiscoverProjectTemplatesFromProjectReferences" 
           Outputs="%(ProjectReference.Identity)"
           DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)"
           Condition=" '@(ProjectReference)'!= '' ">
@@ -270,7 +315,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
       -->
       <ProjectReference Remove="%(ProjectReference.Identity)"
                         Condition=" '$(_ls-FoundRequiredFiles)'=='true' "/>      
-    </ItemGroup>        
+    </ItemGroup>
   </Target>
   
   <PropertyGroup>
@@ -365,6 +410,14 @@ Project Templates: @(ls-PT-ToRemove)"/>
       $(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn);
     </ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- 
+    Defines the list of extensions that will be always be
+    copied from the project folder when project templates
+    are built via the reference.
+    -->
+    <ls-projTempFileExtToAlwaysCopy Include="gif;png;jpg;bmp;" />
+  </ItemGroup>
   <!--
   This target is called once per value in @(ls-VsNewProjTemplateFiles)
   -->
@@ -386,7 +439,8 @@ Project Templates: @(ls-PT-ToRemove)"/>
     <Message Text="_ls-projFile: $(_ls-projFile)" Importance="low"/>
 
     <PropertyGroup>
-      <_ls-pathToFile>%(ls-VsNewProjTemplateFiles.RootDir)%(ls-VsNewProjTemplateFiles.Directory)\..\$(_ls-projFile)</_ls-pathToFile>
+      <_ls-projectPath>%(ls-VsNewProjTemplateFiles.RootDir)%(ls-VsNewProjTemplateFiles.Directory)..\</_ls-projectPath>
+      <_ls-pathToFile>$(_ls-projectPath)$(_ls-projFile)</_ls-pathToFile>
       <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>
     </PropertyGroup>
     
@@ -438,25 +492,34 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
     </CreateTemplateTask>
 
-    <Message Text="_ls-NewProjFilesToCopyRaw: @(_ls-NewProjFilesToCopyRaw)" Importance="low"/>
+    <Copy SourceFiles="@(_ls-NewProjFilesToCopyRaw->'$(_ls-TemplateFolder2)%(Identity)')"
+          DestinationFiles="@(_ls-NewProjFilesToCopyRaw->'$(ls-DestTemplateOutputRoot)%(Identity)')">
+      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
+    </Copy>
     
     <!-- 
     Copy over any files that might be referenced by 
-    .vstemplate file but not in project (i.e. images) 
+    .vstemplate file but not in project (i.e. images)
     -->
     <ItemGroup>
-
+      <_ls-extraprojfiles Remove="@(_ls-extraprojfiles)"/>
+      <_ls-extraprojfiles Include="$(_ls-projectPath)**\*.%(ls-projTempFileExtToAlwaysCopy.Identity)"/>
     </ItemGroup>
     
-    <Copy SourceFiles="@(_ls-NewProjFilesToCopyRaw->'$(_ls-TemplateFolder2)%(Identity)')"
-          DestinationFiles="@(_ls-NewProjFilesToCopyRaw->'$(ls-DestTemplateOutputRoot)%(Identity)')">
+    <Message Text="
+_ls-projectPath: [$(_ls-projectPath)]
+_ls-NewProjFilesToCopyRaw: @(_ls-NewProjFilesToCopyRaw)
+_ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
+    
+    <Copy SourceFiles="@(_ls-extraprojfiles)"
+          DestinationFiles="@(_ls-extraprojfiles->'$(ls-DestTemplateOutputRoot)%(RecursiveDir)%(FileName)%(Extension)')"
+          SkipUnchangedFiles="true">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
     
     <!-- There may be some loose TemplateBuilder files that need to be copied if so copy those too -->
     <ItemGroup>
       <_ls-AddlFilesToCopy Remove="@(_ls-AddlFilesToCopy)"/>
-      <!--<_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\*.*proj;"/>-->
       <_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\_preprocess.xml"/>
     </ItemGroup>
     
@@ -469,8 +532,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
 
     <ItemGroup>
       <_ls-DestProjFile Remove="@(_ls-DestProjFile)"/>
-      <_ls-DestProjFile Include="$(_ls-fullPathToFile)"/>
-      
+      <_ls-DestProjFile Include="$(_ls-fullPathToFile)"/>      
     </ItemGroup>
 
     <!-- Copy the project file to the dest but remove the TemplateBuilder elements during that copy -->
