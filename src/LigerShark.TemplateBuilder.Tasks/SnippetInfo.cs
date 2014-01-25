@@ -38,7 +38,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             try {
                 result = codeSnippetElement.Element(ns + "Header").Element(ns + "Description").Value;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 // TODO: log this error
                 result = string.Empty;
             }                  
@@ -53,7 +53,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             try {
                 result = codeSnippetElement.Element(ns + "Header").Element(ns + "Title").Value;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 // TODO: log this error
                 result = string.Empty;
             }                  
@@ -68,7 +68,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             try {
                 result = codeSnippetElement.Element(ns + "Header").Element(ns + "Shortcut").Value;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 // TODO: log this error
                 result = string.Empty;
             }
