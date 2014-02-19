@@ -839,7 +839,7 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
   </PropertyGroup>
   <Target Name="ls-GenerateTemplateReport" 
           DependsOnTargets="$(ls-GenerateTemplateReportDependsOn)"
-          Inputs="@(ls-VsTemplateFiles);@(_ls-Snippet-Files)"
+          Inputs="@(ls-VsTemplateFiles);@(_ls-Snippet-Files);@(ls-VsNewProjTemplateFiles)"
           Outputs="$(ls-TemplateReportPath)"
           Condition=" '$(ls-GenerateTemplateReport)'=='true' ">
     <Message Text="Creating template pack report at: [$(ls-TemplateReportPath)]" />
@@ -849,7 +849,7 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
                             Condition=" '%(_ls-Snippet-Files.Extension)'=='.snippet' " />
     </ItemGroup>
     
-    <GenerateTemplatePackReport TemplateFiles="@(ls-VsTemplateFiles)"
+    <GenerateTemplatePackReport TemplateFiles="@(ls-VsTemplateFiles);@(ls-VsNewProjTemplateFiles)"
                                 SnippetFiles="@(_ls-SnippetFilesOnly)"
                                 OutputFile="$(ls-TemplateReportPath)"                                
                                 ReportType="Xml"/>
