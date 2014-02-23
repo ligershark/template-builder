@@ -264,7 +264,6 @@ Project Templates: @(ls-PT-ToRemove)"/>
   -->
   <Target Name="ls-DiscoverProjectTemplatesFromProjectReferences" 
           Outputs="%(ProjectReference.Identity)"
-          DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)"
           Condition=" '@(ProjectReference)'!= '' ">
 
     <!-- See if there is a _preprocess.xml file in the directory or not -->
