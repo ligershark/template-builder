@@ -216,11 +216,17 @@ Project Templates: @(ls-PT-ToRemove)"/>
   <Target Name="ls-DiscoverProjectTemplatesFromReferences" DependsOnTargets="$(ls-DiscoverProjectTemplatesFromReferencesDependsOn)"/>
 
   <Target Name="ls-DiscoverProjectTemplatesFromTemplateReferences"
-          Outputs="%(TemplateReference.Identity)"
+          Outputs="%(TemplateReference.PathToProject)"
           Condition=" '@(TemplateReference)'!= '' ">
-    <!-- See if there is a _preprocess.xml file in the directory or not -->
+
+    <ItemGroup>
+      <_ls-temp-template-ref-path Remove="@(_ls-temp-template-ref-path)"/>
+      <_ls-temp-template-ref-path Include="%(TemplateReference.PathToProject)"/>
+    </ItemGroup>
+    
+    <!-- See if there is a _preprocess.xml file in the directory or not -->    
     <PropertyGroup>
-      <_ls-ProjDirectory>%(TemplateReference.RootDir)%(TemplateReference.Directory)</_ls-ProjDirectory>
+      <_ls-ProjDirectory>%(_ls-temp-template-ref-path.RootDir)%(_ls-temp-template-ref-path.Directory)</_ls-ProjDirectory>
       <_ls-ExpectedPreprocessPath>$(_ls-ProjDirectory)_preprocess.xml</_ls-ExpectedPreprocessPath>
 
       <_ls-ExpectedVsTemplatePath>$(_ls-ProjDirectory)_Definitions\_project.vstemplate.xml</_ls-ExpectedVsTemplatePath>
@@ -234,7 +240,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
       <_ls-FoundRequiredFiles>false</_ls-FoundRequiredFiles>
       <_ls-FoundRequiredFiles Condition= " '$(_ls-FoundPreprocessFile)'=='true' and '$(_ls-FoundVsTemplateFile)'=='true' ">true</_ls-FoundRequiredFiles>
 
-      <_ls-ProjFileName>%(TemplateReference.FileName)</_ls-ProjFileName>
+      <_ls-ProjFileName>%(TemplateReference.Identity)</_ls-ProjFileName>
       <_ls-IsSample>false</_ls-IsSample>
       <_ls-IsSample>$(_ls-ProjFileName.StartsWith('_Sample'))</_ls-IsSample>
 
