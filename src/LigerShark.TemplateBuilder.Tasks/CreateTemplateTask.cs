@@ -90,15 +90,16 @@ namespace LigerShark.TemplateBuilder.Tasks {
         }
         public override bool Execute() {
             var vstemplate = XDocument.Load(VsTemplateShell);
-            var workingTemplate = XDocument.Parse(@"<VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""Project"" />");
-
+            var workingTemplate = XDocument.Load(VsTemplateShell);
+            // var workingTemplate = XDocument.Parse(@"<VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""Project"" />");
+            
             if (vstemplate.Root == null || workingTemplate.Root == null) {
                 return false;
             }
 
-            var templateData = new XElement(XName.Get("TemplateData", VsTemplateSchema));
-            workingTemplate.Root.Add(templateData);
-            MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", VsTemplateSchema)));
+            //var templateData = new XElement(XName.Get("TemplateData", VsTemplateSchema));
+            //workingTemplate.Root.Add(templateData);
+            // MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", VsTemplateSchema)));
 
             var project = ProjectRootElement.Open(GetProjectFile(vstemplate));
             var realProjectFile = Path.GetFileName(project.FullPath);
@@ -122,6 +123,13 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 if (element != null) {
                     projectElement = XElement.Parse(element.ToString());
                 }
+
+                templateContentElement.Remove();
+            }
+
+            var tcToRemove = workingTemplate.Root.Element(XName.Get("TemplateContent", VsTemplateSchema));
+            if (tcToRemove != null) {
+                tcToRemove.Remove();
             }
 
             templateContentElement = new XElement(XName.Get("TemplateContent", VsTemplateSchema));

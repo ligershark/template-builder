@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Demo" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <TasksAssemblyPath Condition=" '$(TasksAssemblyPath)'=='' ">$(MSBuildThisFileDirectory)..\bin\Debug\LigerShark.TemplateBuilder.Tasks.dll</TasksAssemblyPath>
+
+    <SamplesFolder Condition=" '$(SamplesFolder)'=='' ">C:\Data\mycode\side-waffle\TemplatePack\obj\Debug\ls-ItemTemplates\</SamplesFolder>
+    <OutputFile Condition=" '$(OutputFile)'=='' ">$(MSBuildThisFileDirectory)gentemplatereport.txt</OutputFile>
+  </PropertyGroup>
+  
+  <UsingTask TaskName="CreateTemplateTask"
+             AssemblyFile="$(TasksAssemblyPath)"/>
+
+
+  <PropertyGroup>
+    <ProjFile Condition=" '$(ProjFile)'=='' ">$(MSBuildThisFileDirectory)replace01.csproj</ProjFile>
+    <VsTemplateFile Condition=" '$(VsTemplateFile)'=='' ">$(MSBuildThisFileDirectory)_project.vstemplate.xml</VsTemplateFile>
+    <VsTemplateOutFile Condition=" '$(VsTemplateOutFile)'=='' ">$(MSBuildThisFileDirectory)..\obj\_project.vstemplate.xml</VsTemplateOutFile>
+  </PropertyGroup>
+  
+  <Target Name="Demo">
+    <Message Text="
+ProjFile: [$(ProjFile)]
+VsTemplateShell: [$(VsTemplateFile)]
+VsTemplateOutFile: [$(VsTemplateOutFile)]
+             " Importance="high" />
+
+    <CreateTemplateTask
+       ProjectFile="$(ProjFile)"
+       VsTemplateShell="$(VsTemplateFile)"
+       DestinationTemplateLocation="$(VsTemplateOutFile)">
+      <Output TaskParameter="FilesToCopy" ItemName="proj-files"/>
+    </CreateTemplateTask>
+
+    <Message Text="proj-files: [@(proj-files)]" Importance="high"/>
+    
+  </Target>
+  
+</Project>

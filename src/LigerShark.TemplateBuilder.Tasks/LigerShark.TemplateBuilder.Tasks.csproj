@@ -68,8 +68,10 @@
     <Content Include="samples\replace01.csproj" />
     <Content Include="samples\templateinfo.xml" />
     <Content Include="samples\_modifyproj.csproj" />
+    <Content Include="samples\_project.vstemplate.xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="samples\CreateTemplateTask.proj" />
     <None Include="samples\GenerateTemplatePackReport.proj">
       <SubType>Designer</SubType>
     </None>
