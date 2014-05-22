@@ -44,7 +44,7 @@ function CheckoutIfUnderScc(){
     "`tChecking if file is under source control, [{0}]" -f $filePath| Write-Verbose
     # http://daltskin.blogspot.com/2012/05/nuget-powershell-and-tfs.html
     $sourceControl = Get-Interface $project.DTE.SourceControl ([EnvDTE80.SourceControl2])
-    if($sourceControl.IsItemUnderSCC($filePath) -and $sourceControl.IsItemCheckedOut($filePath)){
+    if($sourceControl -and $sourceControl.IsItemUnderSCC($filePath) -and $sourceControl.IsItemCheckedOut($filePath)){
         "`tChecking out file [{0}]" -f $filePath | Write-Host
         $sourceControl.CheckOutItem($filePath)
     }
