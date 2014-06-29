@@ -37,6 +37,8 @@ if(!(Test-Path $projFile)){
 
 # Before modifying the project save everything so that nothing is lost
 $DTE.ExecuteCommand("File.SaveAll")
+
+<#
 CheckoutProjFileIfUnderScc -project $project
 EnsureProjectFileIsWriteable -project $project
 
@@ -61,3 +63,4 @@ UpdateVsixManifest -project $project
 
 "    TemplateBuilder has been installed into project [{0}]" -f $project.FullName| Write-Host -ForegroundColor DarkGreen
 "    `nFor more info how to enable TemplateBuilder on build servers see http://sedodream.com/2013/06/06/HowToSimplifyShippingBuildUpdatesInANuGetPackage.aspx" | Write-Host -ForegroundColor DarkGreen
+#>
