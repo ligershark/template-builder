@@ -30,7 +30,7 @@
     <!-- This item should never have more than 1 value -->
     <_NugetSpecFile Include="$(NuspecFile)" />
     <ToolsItems Include="$(SourceRoot)tools\**\*" />
-    <ToolsItems Include="$(OutputRoot)LigerShark.TemplateBuilder.Tasks.dll" />
+    <ToolsItems Include="$(OutputRoot)*.dll" />
     <!-- <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\ligershark.vstemplates.targets" /> 
     <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\Lib\**\*" /> -->
 

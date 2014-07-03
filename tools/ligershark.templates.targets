@@ -739,8 +739,10 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
       ls-PreprocessDiscoverTempInfoFiles;
       ls-PreprocessEachTemplateInfoFile;
       ls-MultiProjExpandVsTemplateFiles;
+      ls-PreprocessProjectFiles;
     </ls-PreprocessTemplatesDependsOn>
   </PropertyGroup>
+  <!-- TODO: this target should be renamed to ls-Preprocess and make ls-PreprocessTemplates a step -->
   <Target Name="ls-PreprocessTemplates" DependsOnTargets="$(ls-PreprocessTemplatesDependsOn)"/>
 
   <!-- This target will find all the templateinfo.xml files -->
@@ -784,6 +786,33 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
              Condition="!Exists('$(_TemplateInfoPath)')"/>
   </Target>
 
+  <!--
+  This target will:
+    1. Discover all the .*proj files in the obj\Debug\ls-Templates\ProjectTemplate folder
+    2. Remove the ProjectExtensions element from the file
+  -->
+  <Target Name="ls-PreprocessProjectFiles">
+    <ItemGroup>
+      <_proj-files Include="$(ls-ProjectTemplateOutputRoot)**\*.proj"/>
+    </ItemGroup>
+    
+    
+  </Target>
+
+  <PropertyGroup>
+    <ls-XdtRemoveProjectExtension Condition=" '$(ls-XdtRemoveProjectExtension)'=='' ">
+      [<![CDATA[
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform" 
+         xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  
+  <ProjectExtensions xdt:Transform="Remove" />
+  
+</Project>      
+      ]]>
+    </ls-XdtRemoveProjectExtension>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <CleanDependsOn>
       $(CleanDependsOn);

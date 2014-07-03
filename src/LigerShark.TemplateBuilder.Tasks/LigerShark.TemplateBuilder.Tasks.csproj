@@ -34,6 +34,12 @@
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Tasks.v4.0" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
+    <Reference Include="Microsoft.Web.XmlTransform">
+      <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
+    </Reference>
+    <Reference Include="SlowCheetah.Xdt">
+      <HintPath>..\packages\SlowCheetah.Xdt.1.1.2-beta\lib\SlowCheetah.Xdt.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CreateTemplateTask.cs" />
+    <Compile Include="Extensions\Dummy.cs" />
     <Compile Include="ModifyProject.cs" />
     <Compile Include="SnippetInfo.cs" />
     <Compile Include="TemplateDocument.cs" />
@@ -71,6 +78,8 @@
     <Content Include="samples\_project.vstemplate.xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="samples\CreateTemplateTask.proj" />
     <None Include="samples\GenerateTemplatePackReport.proj">
       <SubType>Designer</SubType>
