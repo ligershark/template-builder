@@ -15,6 +15,8 @@
     -->
     <ls-BuildRoot Condition=" '$(ls-BuildRoot)'=='' ">$(MSBuildProjectDirectory)\Build\</ls-BuildRoot>
     <ls-TasksRoot Condition=" '$(ls-TasksRoot)'==''">$(MSBuildThisFileDirectory)</ls-TasksRoot>
+    <!-- This is needed if you need to make changes across templatebuilder/SlowCheetah.Xdt -->
+    <ls-SlowCheetahXdtTaskRoot Condition=" '$(ls-SlowCheetahXdtTaskRoot)'=='' ">$(ls-TasksRoot)</ls-SlowCheetahXdtTaskRoot>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' and Exists('$(MSBuildThisFileDirectory)\ligershark.templates.targets')">$(MSBuildThisFileDirectory)\</ls-BuildLib>
     <ls-BuildLib Condition=" '$(ls-BuildLib)'=='' ">$(ls-BuildRoot)Lib\</ls-BuildLib>
     <ls-TemplateReportPath Condition=" '$(ls-TemplateReportPath)'=='' ">$(MSBuildProjectDirectory)\template-report.xml</ls-TemplateReportPath>
@@ -793,10 +795,19 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
   -->
   <Target Name="ls-PreprocessProjectFiles">
     <ItemGroup>
-      <_proj-files Include="$(ls-ProjectTemplateOutputRoot)**\*.proj"/>
+      <_proj-files-to-preprocess Include="$(ls-ProjectTemplateOutputRoot)**\*.??proj"/>
     </ItemGroup>
-    
-    
+
+    <PropertyGroup>
+      <_transform-text>$(ls-XdtRemoveProjectExtension.Replace('[<![CDATA[','').Replace(']]>',''))</_transform-text>
+    </PropertyGroup>
+
+    <Message Text="ls-SlowCheetahXdtTaskRoot: [$(ls-SlowCheetahXdtTaskRoot)]" />
+    <Message Text="Preprocessing the following project files [@(_proj-files-to-preprocess)]"/>
+    <Message Text="TransformText: [$(_transform-text)]" />
+    <TransformXml Source="%(_proj-files-to-preprocess.FullPath)" 
+                  TransformText="$(_transform-text)" 
+                  Destination="%(_proj-files-to-preprocess.FullPath)" />    
   </Target>
 
   <PropertyGroup>
@@ -818,13 +829,14 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
       $(CleanDependsOn);
       CleanTemplateBuilderFiles
     </CleanDependsOn>
+    
     <CleanTemplateBuilderFilesDependsOn>
       $(CleanTemplateBuilderFilesDependsOn);      
     </CleanTemplateBuilderFilesDependsOn>
   </PropertyGroup>
   <Target Name="CleanTemplateBuilderFiles" 
-          DependsOnTargets="$(CleanTemplateBuilderFilesDependsOn)"
-          >
+          DependsOnTargets="$(CleanTemplateBuilderFilesDependsOn)">
+    
     <Message Text="Deleting template-builder files under [$(ls-ItemTemplateOutputRoot)]"/>
     <ItemGroup Condition=" '$(ls-ItemTemplateOutputRoot)'!='' ">
       <_TemplateBuilderFiles Remove="@(_TemplateBuilderFiles)"/>
@@ -832,6 +844,7 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
     </ItemGroup>
     <Delete Files="@(_TemplateBuilderFiles)" Condition=" '$(ls-ItemTemplateOutputRoot)'!='' "/>
     <RemoveDir Directories="$(ls-ItemTemplateOutputRoot)"/>
+    
   </Target>
   <!--************************************************************************************
       Snippet support
@@ -897,4 +910,5 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
   <UsingTask TaskName="ReplaceInFiles" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="CreateTemplateTask" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="ModifyProject" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
+  <UsingTask TaskName="TransformXml" AssemblyFile="$(ls-SlowCheetahXdtTaskRoot)SlowCheetah.Xdt.dll"/>
 </Project>
