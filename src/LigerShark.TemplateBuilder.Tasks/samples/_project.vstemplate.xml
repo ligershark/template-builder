@@ -20,4 +20,8 @@
     <Project TargetFileName="RazorV3Template.csproj" File="RazorV3Template.csproj" ReplaceParameters="true">      
     </Project>
   </TemplateContent>
+  <WizardExtension>
+    <Assembly>LigerShark.Templates, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Assembly>
+    <FullClassName>LigerShark.Templates.Html5UpProjectWizard</FullClassName>
+  </WizardExtension>
 </VSTemplate>

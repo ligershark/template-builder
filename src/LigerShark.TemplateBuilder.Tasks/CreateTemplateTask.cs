@@ -97,8 +97,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 return false;
             }
 
-            //var templateData = new XElement(XName.Get("TemplateData", VsTemplateSchema));
-            //workingTemplate.Root.Add(templateData);
+            // var templateData = new XElement(XName.Get("TemplateData", VsTemplateSchema));
+            // workingTemplate.Root.Add(templateData);
             // MergeTemplateData(templateData, vstemplate.Root.Element(XName.Get("TemplateData", VsTemplateSchema)));
 
             var project = ProjectRootElement.Open(GetProjectFile(vstemplate));
@@ -193,12 +193,14 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             //Copy all non-mutated sections
             var mutatedTemplateSections = new[] {"TemplateContent", "TemplateData"};
-            var elementsToCopyDirectly = vstemplate.Root.Elements().Where(x => !mutatedTemplateSections.Contains(x.Name.LocalName));
 
-            foreach (var element in elementsToCopyDirectly) {
-                var clonedElement = XElement.Parse(element.ToString());
-                workingTemplate.Root.Add(clonedElement);
-            }
+            // In commit f668a11df0f403520ae1457d3fd5a872ace2107d the entire file is copied first, 
+            // so this should no longer be needed.
+            // var elementsToCopyDirectly = vstemplate.Root.Elements().Where(x => !mutatedTemplateSections.Contains(x.Name.LocalName));
+            //foreach (var element in elementsToCopyDirectly) {
+            //    var clonedElement = XElement.Parse(element.ToString());
+            //    workingTemplate.Root.Add(clonedElement);
+            //}
 
             Merge(projectElement, itemsToMerge);
             workingTemplate.Save(DestinationTemplateLocation);
