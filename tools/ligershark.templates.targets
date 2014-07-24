@@ -62,6 +62,8 @@
 
     <ls-VsTemplateXmlSchema Condition=" '$(ls-VsTemplateXmlSchema)'=='' ">http://schemas.microsoft.com/developer/vstemplate/2005</ls-VsTemplateXmlSchema>
     <ls-UseHardLinksForItemTemplatesCopy Condition=" '$(ls-UseHardLinksForItemTemplatesCopy)'=='' ">false</ls-UseHardLinksForItemTemplatesCopy>
+
+    <ls-enable-remove-proj-extensions Condition=" '$(ls-enable-remove-proj-extensions)'=='' ">true</ls-enable-remove-proj-extensions>
   </PropertyGroup>
 
   <ItemGroup>
@@ -807,7 +809,8 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
     <Message Text="TransformText: [$(_transform-text)]" />
     <TransformXml Source="%(_proj-files-to-preprocess.FullPath)" 
                   TransformText="$(_transform-text)" 
-                  Destination="%(_proj-files-to-preprocess.FullPath)" />    
+                  Destination="%(_proj-files-to-preprocess.FullPath)"
+                  Condition=" '$(ls-enable-remove-proj-extensions)' == 'true' " />
   </Target>
 
   <PropertyGroup>
