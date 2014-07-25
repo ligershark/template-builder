@@ -804,13 +804,13 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
       <_transform-text>$(ls-XdtRemoveProjectExtension.Replace('[<![CDATA[','').Replace(']]>',''))</_transform-text>
     </PropertyGroup>
 
-    <Message Text="ls-SlowCheetahXdtTaskRoot: [$(ls-SlowCheetahXdtTaskRoot)]" />
-    <Message Text="Preprocessing the following project files [@(_proj-files-to-preprocess)]"/>
-    <Message Text="TransformText: [$(_transform-text)]" />
-    <TransformXml Source="%(_proj-files-to-preprocess.FullPath)" 
+    <Message Text="ls-ProjectTemplateOutputRoot: [$(ls-ProjectTemplateOutputRoot)]" Importance="low"/>
+    <Message Text="ls-SlowCheetahXdtTaskRoot: [$(ls-SlowCheetahXdtTaskRoot)]"  Importance="low"/>
+    <Message Text="Preprocessing the following project files [@(_proj-files-to-preprocess)]" Importance="low"/>
+    <TransformXml Source="%(_proj-files-to-preprocess.FullPath)"
                   TransformText="$(_transform-text)" 
                   Destination="%(_proj-files-to-preprocess.FullPath)"
-                  Condition=" '$(ls-enable-remove-proj-extensions)' == 'true' " />
+                  Condition=" '%(_proj-files-to-preprocess.FullPath)' != '' and '$(ls-enable-remove-proj-extensions)' == 'true' " />
   </Target>
 
   <PropertyGroup>
