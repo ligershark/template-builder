@@ -87,7 +87,8 @@
                      WebPublishExtnsionsToExcludeItem;
                      COMReference;
                      DocumentationProjectOutputGroupOutput;
-                     XapFilesInputCollection"/>
+                     XapFilesInputCollection;
+                     Import"/>
   </ItemGroup>
   <Target Name="CopyMSBuildFilesToLocalAppData"
           Inputs="@(ls-BuildAssemblies)"
