@@ -38,12 +38,14 @@
       <DestDir>%(RecursiveDir)</DestDir>
     </ContentItems>
 
-    <LibItems Include="$(OutputRoot)TemplateBuilder.dll"/>
+    <LibItems Include="$(OutputRoot)TemplateBuilder.dll; $(OutputRoot)FSharp.Core.dll; $(OutputRoot)MultiProjectDialog.dll; $(Outputroot)MultiProjectTemplateWizard.dll"/>
 
     <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
 
     <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" />
     <ProjectsToBuild Include="$(SourceRoot)src\TemplateBuilder\TemplateBuilder.csproj" />
+    <ProjectsToBuild Include="$(SourceRoot)src\MultiProjectDialog\MultiProjectDialog.csproj" />
+    <ProjectsToBuild Include="$(SourceRoot)src\MultiProjectTemplateWizard\MultiProjectTemplateWizard.fsproj" />
   </ItemGroup>
 
   <PropertyGroup>
