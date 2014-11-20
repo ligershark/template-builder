@@ -55,8 +55,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
         public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
             foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", VsTemplateSchema))) {
-                takenSourceFileNames.Add(projectItem.Value.ToLower());
-                takenTargetFileNames.Add(projectItem.Attribute(XName.Get("TargetFileName")).Value.ToLower());
+                takenSourceFileNames.Add(string.Format(@"{0}\{1}", sourcePrefix, projectItem.Value.ToLowerInvariant()));
+                takenTargetFileNames.Add(string.Format(@"{0}\{1}", sourcePrefix, projectItem.Attribute(XName.Get("TargetFileName")).Value.ToLowerInvariant()));
             }
 
             foreach (var folder in projectItemContainer.Elements(XName.Get("Folder", VsTemplateSchema))) {
