@@ -24,8 +24,12 @@ os: Windows Server 2012 R2
 #---------------------------------#
 
 build_script:
-  nuget restore sidewaffle.sln
-  build.cmd
+  -cmd: nuget restore sidewaffle.sln
+  -cmd: build.cmd
 
 artifacts:
   - path: 'OutputRoot\**\*'
+
+nuget:
+  account_feed: true
+  project_feed: true
