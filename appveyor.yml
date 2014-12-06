@@ -29,7 +29,10 @@ build_script:
   build.cmd
 
 artifacts:
-  - path: 'OutputRoot\**\*'
+  - path: 'OutputRoot\**\*.nupkg'
+  - path: 'OutputRoot\**\*.dll'
+  - path: 'OutputRoot\**\*.pdb'
+  - path: 'OutputRoot\**\*.config'
 
 nuget:
   account_feed: true
