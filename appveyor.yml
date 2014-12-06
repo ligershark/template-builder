@@ -1,0 +1,36 @@
+# Notes:
+#   - Minimal appveyor.yml file is an empty file. All sections are optional.
+#   - Indent each level of configuration with 2 spaces. Do not use tabs!
+#   - All section names are case-sensitive.
+#   - Section names should be unique on each level.
+#   - Full reference at http://www.appveyor.com/docs/appveyor-yml
+
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
+# version format
+version: 1.0.{build}
+
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+
+# Operating system (build VM template)
+os: Windows Server 2012 R2
+
+#---------------------------------#
+#       build configuration       #
+#---------------------------------#
+before_build:
+  nuget restore src\LigerShark.TemplateBuilder.sln
+
+build_script:
+  build.cmd
+
+artifacts:
+  - path: 'OutputRoot\**\*'
+
+nuget:
+  account_feed: true
+  project_feed: true
