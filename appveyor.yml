@@ -23,7 +23,7 @@ os: Windows Server 2012 R2
 #       build configuration       #
 #---------------------------------#
 before_build:
-  nuget restore sidewaffle.sln
+  nuget restore src\LigerShark.TemplateBuilder.sln
 
 build_script:
   build.cmd
