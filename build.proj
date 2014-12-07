@@ -25,30 +25,31 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)'=='' ">Release</Configuration>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <!-- This item should never have more than 1 value -->
-    <_NugetSpecFile Include="$(NuspecFile)" />
-    <ToolsItems Include="$(SourceRoot)tools\**\*" />
-    <ToolsItems Include="$(OutputRoot)*.dll" />
-    <!-- <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\ligershark.vstemplates.targets" /> 
-    <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\Lib\**\*" /> -->
 
-    <ContentItems Include="$(SourceRoot)content\**\*">
-      <DestDir>%(RecursiveDir)</DestDir>
-    </ContentItems>
+  <Target Name="PopulateNuGetItems">
+    <ItemGroup>
+      <!-- This item should never have more than 1 value -->
+      <_NugetSpecFile Include="$(NuspecFile)" />
+      <ToolsItems Include="$(SourceRoot)tools\**\*" />
+      <ToolsItems Include="$(OutputRoot)*.dll" />
+      <!-- <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\ligershark.vstemplates.targets" /> 
+      <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\Lib\**\*" /> -->
 
-    <LibItems Include="$(OutputRoot)TemplateBuilder.dll"/>
+      <ContentItems Include="$(SourceRoot)content\**\*">
+        <DestDir>%(RecursiveDir)</DestDir>
+      </ContentItems>
 
-    <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
+      <LibItems Include="$(OutputRoot)TemplateBuilder.dll"/>
 
-    <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" />
-    <ProjectsToBuild Include="$(SourceRoot)src\TemplateBuilder\TemplateBuilder.csproj" />
-  </ItemGroup>
+      <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
 
+      <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" />
+      <ProjectsToBuild Include="$(SourceRoot)src\TemplateBuilder\TemplateBuilder.csproj" />
+    </ItemGroup>
+  </Target>
   <PropertyGroup>
     <FullBuildDependsOn>
-      CleanAndInitalize;
+      Clean;
       BuildProjects;
       CreateNugetPackage;
     </FullBuildDependsOn>
@@ -65,7 +66,8 @@
   
   <PropertyGroup>
     <CreateNugetPackageDependsOn>
-      CleanAndInitalize;
+      Clean;
+      PopulateNuGetItems;
       PrepareAndPopulateNugetFolder;
       CoreCreateNugetPackage;
     </CreateNugetPackageDependsOn>
@@ -111,7 +113,7 @@
 
   </Target>
 
-  <Target Name="CleanAndInitalize">
+  <Target Name="Clean">
     <MakeDir Directories="$(OutputRoot)"/>
     <MakeDir Directories="$(PackageRoot)"/>
     
