@@ -26,15 +26,17 @@
     <Configuration Condition=" '$(Configuration)'=='' ">Release</Configuration>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" />
+    <ProjectsToBuild Include="$(SourceRoot)src\TemplateBuilder\TemplateBuilder.csproj" />
+  </ItemGroup>
+  
   <Target Name="PopulateNuGetItems">
     <ItemGroup>
       <!-- This item should never have more than 1 value -->
       <_NugetSpecFile Include="$(NuspecFile)" />
       <ToolsItems Include="$(SourceRoot)tools\**\*" />
       <ToolsItems Include="$(OutputRoot)*.dll" />
-      <!-- <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\ligershark.vstemplates.targets" /> 
-      <ToolsItems Include="$(SourceRoot)WebTemplatePack\Build\Lib\**\*" /> -->
-
       <ContentItems Include="$(SourceRoot)content\**\*">
         <DestDir>%(RecursiveDir)</DestDir>
       </ContentItems>
@@ -42,9 +44,6 @@
       <LibItems Include="$(OutputRoot)TemplateBuilder.dll"/>
 
       <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
-
-      <ProjectsToBuild Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\LigerShark.TemplateBuilder.Tasks.csproj" />
-      <ProjectsToBuild Include="$(SourceRoot)src\TemplateBuilder\TemplateBuilder.csproj" />
     </ItemGroup>
   </Target>
   <PropertyGroup>
