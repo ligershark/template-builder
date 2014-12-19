@@ -26,7 +26,7 @@ before_build:
   nuget restore src\LigerShark.TemplateBuilder.sln
 
 build_script:
-  build.cmd
+  - ps: if($env:APPVEYOR_REPO_BRANCH -ne "release"){build.ps1} else {build.ps1 -publishToNuget}
 
 artifacts:
   - path: 'OutputRoot\**\*.nupkg'
