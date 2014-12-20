@@ -205,6 +205,5 @@ try{
     }
 }
 catch{
-   "An error has occurred.`nError: [{0}]" -f ($_.Exception) | Write-Error
-   exit 1
+   throw ("An error has occurred.`nError: [{0}]" -f ($_.Exception))
 }
