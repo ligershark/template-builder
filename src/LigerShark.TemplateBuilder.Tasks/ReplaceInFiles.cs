@@ -29,7 +29,7 @@
                 // parse the XML file
                 TemplateInfo templateInfo = TemplateInfo.BuildTemplateInfoFrom(this.TemplateInfoFile.GetMetadata("FullPath"));
 
-                IReplacer replacer = new RobustReplacer();
+                var replacer = new RobustReplacer();
                 StringBuilder logger = new StringBuilder();
                 replacer.ReplaceInFiles(rootDirFullPath, templateInfo.Include, templateInfo.Exclude, templateInfo.Replacements, logger);
                 Log.LogMessage(logger.ToString());

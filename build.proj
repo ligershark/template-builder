@@ -50,6 +50,7 @@
     <FullBuildDependsOn>
       Clean;
       BuildProjects;
+      BuildReplacerDll;
       CreateNugetPackage;
     </FullBuildDependsOn>
     <BuildProjectsDependsOn>
@@ -58,9 +59,30 @@
   </PropertyGroup>
   <Target Name="FullBuild" DependsOnTargets="$(FullBuildDependsOn)"/>
   <Target Name="BuildProjects" DependsOnTargets="$(BuildProjectsDependsOn)"/>
+  
   <Target Name="CoreBuildProjects">
     <Message Text="Building projects [@(ProjectsToBuild)]" Importance="high"/>
     <MSBuild Projects="@(ProjectsToBuild)" Properties="VisualStudioVersion=$(VisualStudioVersion);Configuration=$(Configuration);OutputPath=$(OutputRoot)"/>
+  </Target>
+
+  <PropertyGroup>
+    <ReplacerDestAssemblyPath Condition=" '$(ReplacerDestAssemblyPath)'=='' ">$(OutputRoot)LigerShark.FileReplacer.dll</ReplacerDestAssemblyPath>
+    <ReplaceOptimize Condition=" ''=='' ">true</ReplaceOptimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <ReplacerSourceFiles Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\RobustReplacer.cs"/>
+    <ReplacerSourceFiles Include="$(SourceRoot)src\LigerShark.TemplateBuilder.Tasks\TokenReplacer.cs"/>
+  </ItemGroup>
+  <Target Name="BuildReplacerDll" DependsOnTargets="$(BuildReplacerDllDependsOn)">
+    <Message Text="Building replacer .dll [$(ReplacerSourceFiles)] from the source files: @(ReplacerSourceFiles->'%(FullPath)')"/>
+    <!-- csc.exe @('/target:library';'/out:c:\temp\LigerShark.Replacer.dll';'C:\Data\mycode\template-builder\src\Li
+    gerShark.TemplateBuilder.Tasks\RobustReplacer.cs';'C:\Data\mycode\template-builder\src\LigerShark.TemplateBuilder.Tasks\TokenReplacer.cs')-->
+    <Csc Sources="@(ReplacerSourceFiles)"
+         TargetType="library"
+         OutputAssembly="$(ReplacerDestAssemblyPath)"
+         Optimize="$(ReplaceOptimize)"
+         >
+    </Csc>
   </Target>
   
   <PropertyGroup>
