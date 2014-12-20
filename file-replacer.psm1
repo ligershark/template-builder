@@ -97,7 +97,6 @@ function Replace-TextInFolder{
             $repDictionary = New-Object 'system.collections.generic.dictionary[string,string]'
 
             $replacements.Keys | % {
-                $foo = 'bar'
                 $repDictionary.Add($_,$replacements[$_])
             }
 
