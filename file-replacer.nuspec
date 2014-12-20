@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>file-replacer</id>
-    <version>0.1.0-beta</version>
+    <version>0.2.0-beta</version>
     <authors>Sayed Ibrahim Hashimi</authors>
     <owners>Sayed Ibrahim Hashimi</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
