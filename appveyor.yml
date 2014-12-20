@@ -28,6 +28,10 @@ before_build:
 build_script:
   - ps: if($env:APPVEYOR_REPO_BRANCH -ne "release"){build.ps1} else {build.ps1 -publishToNuget}
 
+environment:
+  NuGetApiKey:
+    secure: HFUEQanhaxHV/sRQYznQqg7LToxSGeIoSvrmyY29PJ1eDbXxUuYrEQ6MPAsZIQFT
+
 artifacts:
   - path: 'OutputRoot\**\*.nupkg'
   - path: 'OutputRoot\**\*.dll'
