@@ -71,6 +71,8 @@
       PopulateNuGetItems;
       PrepareAndPopulateNugetFolder;
       CoreCreateNugetPackage;
+      CreateFileReplacerNuGetPackage;
+      CopyCreatedNuGetPkgsToLocalRepo;
     </CreateNugetPackageDependsOn>
   </PropertyGroup>
   <Target Name="CreateNugetPackage" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
@@ -85,13 +87,23 @@
     <Message Text="_Cmd: $(_Cmd)" Importance="low" />
     <Exec Command="$(_Cmd)"/>
 
+    <!--<ItemGroup>
+      <_CreatedPackage Include="$(OutputRoot)TemplateBuilder*.nupkg"/>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_CreatedPackage)"
+          DestinationFiles="@(_CreatedPackage->'$(NugetLocalRepo)%(Filename)%(Extension)')"
+          Condition="Exists('$(NugetLocalRepo)')"/>-->
+  </Target>
+
+  <Target Name="CopyCreatedNuGetPkgsToLocalRepo">
     <ItemGroup>
       <_CreatedPackage Include="$(OutputRoot)*.nupkg"/>
     </ItemGroup>
 
     <Copy SourceFiles="@(_CreatedPackage)"
           DestinationFiles="@(_CreatedPackage->'$(NugetLocalRepo)%(Filename)%(Extension)')"
-          Condition="Exists('$(NugetLocalRepo)')"/><!---->
+          Condition="Exists('$(NugetLocalRepo)')"/>
   </Target>
   
   <Target Name="PrepareAndPopulateNugetFolder">
@@ -130,4 +142,32 @@
     </ItemGroup>
     <Delete Files="@(_FilesToDelete)"/>
   </Target>
+
+  <ItemGroup>
+    <FileReplacerSourceFiles Include="$(SourceRoot)file-replacer.nuspec"/>
+    <FileReplacerSourceFiles Include="$(SourceRoot)file-replacer.psm1"/>
+    <FileReplacerSourceFiles Include="$(SourceRoot)LICENSE.md"/>
+  </ItemGroup>
+  <PropertyGroup>
+    <CreateFileReplacerNuGetPackageDependsOn>
+      $(CreateFileReplacerNuGetPackageDependsOn);
+      CoreBuildProjects;
+    </CreateFileReplacerNuGetPackageDependsOn>
+  </PropertyGroup>
+  <Target Name="CreateFileReplacerNuGetPackage">
+    <Message Text="Copying file replacer source files to outputroot" Importance="low"/>
+
+    <Copy SourceFiles="@(FileReplacerSourceFiles)"
+          DestinationFiles="@(FileReplacerSourceFiles->'$(OutputRoot)%(RecursiveDir)%(Filename)%(Extension)')"/>
+
+    <!-- copy files from source folder to output -->
+    <PropertyGroup>
+      <_NugetSpecFile>$(OutputRoot)file-replacer.nuspec</_NugetSpecFile>
+      <_Cmd>"$(NugetExe)" pack "$(_NugetSpecFile)" -NoPackageAnalysis -OutputDirectory "$(OutputRootNoTrailingSlash)" </_Cmd>
+    </PropertyGroup>
+
+    <Message Text="Building file replacer nuget package with command [$(_Cmd)]" Importance="low" />
+    <Exec Command="$(_Cmd)"/>
+  </Target>
+
 </Project>

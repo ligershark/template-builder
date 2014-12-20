@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>file-replacer</id>
+    <version>1.0.0.0-beta</version>
+    <authors>Sayed Ibrahim Hashimi</authors>
+    <owners>Sayed Ibrahim Hashimi</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/ligershark/template-builder</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      A NuGet package which contains a PowerShell module which can be used to replace
+      text in files.
+    </description>
+    <copyright>Copyright 2013-2015 Sayed Ibrahim Hashimi</copyright>
+  </metadata>
+  <files>
+	  <file src="file-replacer.psm1" target="tools\" />
+	  <file src="LigerShark.FileReplacer.dll" target="tools\LigerShark.FileReplacer.dll" />
+	  <file src="LICENSE.md" target="LICENSE.md" />
+  </files>
+</package>
