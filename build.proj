@@ -43,7 +43,6 @@
       </ContentItems>
 
       <LibItems Include="$(OutputRoot)TemplateBuilder.dll"/>
-      <LibItems Include="$(OutputRoot)LigerShark.FileReplacer.dll"/>
 
       <NuGetRootItems Include="$(SourceRoot)readme.txt"/>
     </ItemGroup>
