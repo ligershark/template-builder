@@ -143,6 +143,9 @@ function PublishNuGetPackage{
             $filteredCmd = Filter-String ('Publishing nuget package with the following args: [nuget.exe {0}]' -f ($cmdArgs -join ' '))
             if($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $filteredCmd)){
                 &(Get-Nuget) $cmdArgs
+                if($LASTEXITCODE -ne 0){
+                    throw ('nuget.exe failed with the following error code [{0}]' -f $LASTEXITCODE)
+                }
             }
         }
     }
@@ -194,7 +197,7 @@ try{
         # get the nuget pkg from the output folder
         $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName
         $package = (Get-ChildItem $outputroot 'TemplateBuilder.*.nupkg')
-        if($package.count > 1){
+        if($package.count -gt 1){
             throw ('Found more than one file [{0} found] matching ''TemplateBuilder.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
         }
         # publish the nuget package
