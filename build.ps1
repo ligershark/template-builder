@@ -18,7 +18,11 @@ param(
 
     [Parameter(ParameterSetName='build')]
     [Parameter(ParameterSetName='publishToNuGet')]
-    [switch]$publishToNuget,
+    [switch]$publishTemplateBuilderToNuget,
+
+    [Parameter(ParameterSetName='build')]
+    [Parameter(ParameterSetName='publishToNuGet')]
+    [switch]$publishFileReplacerToNuget,
 
     [Parameter(ParameterSetName='publishToNuGet')]
     [string]$nugetApiKey = ($env:NuGetApiKey)
@@ -193,15 +197,27 @@ try{
     
     Build
 
-    if($publishToNuget){
-        # get the nuget pkg from the output folder
-        $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName
+    $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName
+    $nupkgToPublish = @()
+    if($publishTemplateBuilderToNuget){
         $package = (Get-ChildItem $outputroot 'TemplateBuilder.*.nupkg')
         if($package.count -gt 1){
             throw ('Found more than one file [{0} found] matching ''TemplateBuilder.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
         }
+        $nupkgToPublish += ($package.FullName)
+    }
+    if($publishFileReplacerToNuget){
+        $package = (Get-ChildItem $outputroot 'file-replacer.*.nupkg')
+        if($package.count -gt 1){
+            throw ('Found more than one file [{0} found] matching ''file-replacer.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
+        }
+        $nupkgToPublish += ($package.FullName)
+    }
+
+    if($nupkgToPublish.Length -gt 0){
+        'nupkgToPublish: [{0}]' -f $nupkgToPublish | Write-Verbose
         # publish the nuget package
-        PublishNuGetPackage -nugetPackage $package.FullName -nugetApiKey $nugetApiKey
+        PublishNuGetPackage -nugetPackage $nupkgToPublish -nugetApiKey $nugetApiKey
     }
 }
 catch{

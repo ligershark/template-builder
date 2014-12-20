@@ -6,7 +6,7 @@
     using System.Text;
     using System.Text.RegularExpressions;
 
-    public class RobustReplacer : IReplacer {
+    public class RobustReplacer {
 
         public void ReplaceInFiles(string rootDir, string include,string exclude,IDictionary<string,string>replacements,StringBuilder logger = null) {
             if (string.IsNullOrEmpty(rootDir)) { throw new ArgumentNullException("rootDir"); }
