@@ -16,7 +16,7 @@ function Enable-GetNuGet{
                 if(!$expectedPath){throw ('Unable to download getnuget.psm1')}
             }
 
-            'importing module [{0}]' -f $expectedPath | Write-Output
+            'importing module [{0}]' -f $expectedPath | Write-Verbose
             Import-Module $expectedPath -DisableNameChecking -Force -Scope Global
         }
     }
@@ -24,7 +24,7 @@ function Enable-GetNuGet{
 
 Enable-GetNuGet
 'trying to load file replacer' | Write-Output
-Enable-NuGetModule2 -name 'file-replacer' -version '0.2.0-beta'
+Enable-NuGetModule -name 'file-replacer' -version '0.2.0-beta'
 
 $folder = pwd
 $include = '*.txt'

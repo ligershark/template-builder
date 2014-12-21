@@ -110,25 +110,3 @@ function Replace-TextInFolder{
         }
     }
 }
-
-<#
-try{
-    $foo = 'bar'
-
-    Add-Type -path 'C:\Data\mycode\template-builder\src\LigerShark.FileReplacer\bin\Debug\LigerShark.FileReplacer.dll'
-
-    $replacer = new-object LigerShark.TemplateBuilder.Tasks.RobustReplacer
-
-    $folder = 'C:\temp\replace\copy\'
-    $include='*.*'
-    $exclude=''
-    $replacements = New-Object 'system.collections.generic.dictionary[string,string]'
-    $replacements.add('FOO','REPLACED')
-    'calling replace on folder [{0}]' -f $folder|write-output
-    $replacer.ReplaceInFiles($folder,$include,$exclude,$replacements,$null)
-    'replace complete'|write-output
-}
-catch{
-    "An error has occurred.`nError: [{0}]" -f ($_.Exception) | Write-Warning
-}
-#>
