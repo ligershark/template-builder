@@ -34,11 +34,16 @@
   
   <Target Name="PopulateNuGetItems">
     <ItemGroup>
+      <_nugetcontent Remove="@(_nugetcontent)"/>
+      <_nugetcontent Include="$(SourceRoot)content\**\*"/>
+    </ItemGroup>
+    
+    <ItemGroup>
       <!-- This item should never have more than 1 value -->
       <_NugetSpecFile Include="$(NuspecFile)" />
       <ToolsItems Include="$(SourceRoot)tools\**\*" />
       <ToolsItems Include="$(OutputRoot)*.dll" />
-      <ContentItems Include="$(SourceRoot)content\**\*">
+      <ContentItems Include="@(_nugetcontent)">
         <DestDir>%(RecursiveDir)</DestDir>
       </ContentItems>
 

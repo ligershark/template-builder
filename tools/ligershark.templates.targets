@@ -456,7 +456,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
       <_ls-pathToFile>$(_ls-projectPath)$(_ls-projFile)</_ls-pathToFile>
       <_ls-fullPathToFile>$([System.IO.Path]::GetFullPath($(_ls-pathToFile)))</_ls-fullPathToFile>
     </PropertyGroup>
-    
+
     <ItemGroup>
       <_ls-TempFileToAdd Include="$(_ls-fullPathToFile)"/>
     </ItemGroup>
