@@ -905,6 +905,32 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
                                 OutputFile="$(ls-TemplateReportPath)"                                
                                 ReportType="Xml"/>
   </Target>
+
+  <!--************************************************************************************
+      Items to support including the templatebuilder nupkg in the generated vsix
+  ************************************************************************************-->
+  
+  <!-- 
+  IncludeTemplateBuilderNuGetPkgInVsix is false by default. It can be set in the template-builder.props
+  file by consumers if they want to include the TemplateBuilder .nupkg in the vsix.
+  -->
+  <PropertyGroup>
+    <IncludeTemplateBuilderNuGetPkgInVsix Condition=" '$(IncludeTemplateBuilderNuGetPkgInVsix)'=='' ">false</IncludeTemplateBuilderNuGetPkgInVsix>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(IncludeTemplateBuilderNuGetPkgInVsix)'=='true' ">
+    <TemplateBuilderNuPkgFolder Condition=" '$(TemplateBuilderNuPkg)'=='' ">$([System.IO.Path]::GetFullPath($([System.IO.Path]::GetDirectoryName($(TemplateBuilderTargets)))\..\))</TemplateBuilderNuPkgFolder>
+  </PropertyGroup>
+
+  <Target Name="IncludeTemplateBuilderVsix" BeforeTargets="CoreCompile" Condition=" '$(IncludeTemplateBuilderNuGetPkgInVsix)'=='true' ">
+    <ItemGroup>
+      <_templatebuildernupkg Include="$(TemplateBuilderNuPkgFolder)TemplateBuilder*.nupkg"/>
+    </ItemGroup>
+    <Message Text="Including templatebuilder nupkg [$(_templatebuildernupkg)] into vsix output." Importance="low" />
+    <ItemGroup>
+      <VSIXSourceItem Include="%(_templatebuildernupkg.Identity)">
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
   
   <!--************************************************************************************
       Tasks defined below
