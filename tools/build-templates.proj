@@ -28,11 +28,13 @@
     <Message Text="Inside validate properties" Importance="high"/>
     <Error Condition=" '$(TemplateSourceRoot)'=='' " Text="TemplateSourceRoot is a required property but it is empty"/>
     <Error Condition="!Exists('$(TemplateSourceRoot)')" Text="[$(TemplateSourceRoot)] was not found on"/>
-      
-    <Error Text="ls-ProjectTemplateRoot is a required property but it is empty" Condition=" '$(ls-ProjectTemplateRoot)'=='' "/>
-    <!--<Error Condition="!Exists('$(ls-ProjectTemplateRoot)')" Text="[$(ls-ProjectTemplateRoot)] was not found on"/>-->
+
+    <Warning Text="ls-TemplateReferenceRoot is a required property but it is empty" Condition=" '$(ls-ProjectTemplateRoot)'=='' "/>
     
-    <Error Text="ls-ItemTemplateRoot is a required property but it is empty" Condition=" '$(ls-ItemTemplateRoot)'=='' "/>
+    <Warning Text="ls-ProjectTemplateRoot is a required property but it is empty" Condition=" '$(ls-ProjectTemplateRoot)'=='' "/>
+    <!--<Error Condition="!Exists('$(ls-ProjectTemplateRoot)')" Text="[$(ls-ProjectTemplateRoot)] was not found on"/>-->
+
+    <Warning Text="ls-ItemTemplateRoot is a required property but it is empty" Condition=" '$(ls-ItemTemplateRoot)'=='' "/>
     <!--<Error Condition="!Exists('$(ls-ItemTemplateRoot)')" Text="[$(ls-ItemTemplateRoot)] was not found on"/>-->
     
     <Error Text="BaseIntermediateOutputPath is a required property but it is empty" Condition=" '$(BaseIntermediateOutputPath)'=='' "/>    
@@ -45,24 +47,26 @@
   
   <Target Name="FixProperties">
     <PropertyGroup>
+      <ls-TemplateReferenceRoot Condition="!HasTrailingSlash('$(ls-TemplateReferenceRoot)')">$(ls-TemplateReferenceRoot)\</ls-TemplateReferenceRoot>
       <ls-ProjectTemplateRoot Condition="!HasTrailingSlash('$(ls-ProjectTemplateRoot)')">$(ls-ProjectTemplateRoot)\</ls-ProjectTemplateRoot>
-      <ls-ItemTemplateRoot Condition="!HasTrailingSlash('$(ls-ItemTemplateRoot)')">$(ls-ItemTemplateRoot)</ls-ItemTemplateRoot>
+      <ls-ItemTemplateRoot Condition="!HasTrailingSlash('$(ls-ItemTemplateRoot)')">$(ls-ItemTemplateRoot)\</ls-ItemTemplateRoot>
     </PropertyGroup>
   </Target>
 
   <PropertyGroup>
     <DiscoverTemplateFilesDependsOn>
       $(DiscoverTemplateFilesDependsOn);
-      ValidateProperties
+      ValidateProperties;
+      FixProperties
     </DiscoverTemplateFilesDependsOn>
   </PropertyGroup>
   <Target Name="DiscoverTemplateFiles" DependsOnTargets="$(DiscoverTemplateFilesDependsOn)">
-    <Message Text="ls-ProjectTemplateRoot: [$(ls-ProjectTemplateRoot)]" Importance="high"/>
+    <Message Text="ls-TemplateReferenceRoot: [$(ls-TemplateReferenceRoot)]" Importance="high"/>    
     <Message Text="ls-ItemTemplateRoot: [$(ls-ItemTemplateRoot)]" Importance="high"/>
     <ItemGroup>
-      <_templatefiles Include="$(ls-ProjectTemplateRoot)**\_project.vstemplate.xml"/>
+      <_templatefiles Include="$(ls-TemplateReferenceRoot)**\_project.vstemplate.xml"/>
       <TemplateReference Include="%(_templatefiles.rootdir)%(_templatefiles.Directory)%(_templatefiles.filename)%(_templatefiles.extension)">
-        <PathToProject>$(ls-ProjectTemplateRoot)%(RecursiveDir)%(Filename)%(Extension)</PathToProject>
+        <PathToProject>$(ls-TemplateReferenceRoot)%(RecursiveDir)%(Filename)%(Extension)</PathToProject>
       </TemplateReference>
     </ItemGroup>
   </Target>
