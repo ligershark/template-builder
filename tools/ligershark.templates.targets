@@ -253,6 +253,19 @@ Project Templates: @(ls-PT-ToRemove)"/>
       <_ls-IncludeTemplate Condition=" '$(Configuration)'=='Release' and '$(_ls-IsSample)'=='true' ">false</_ls-IncludeTemplate>
     </PropertyGroup>
 
+    <Message Text="
+ls-DiscoverProjectTemplatesFromTemplateReferences
+  _ls-ProjDirectory: [$(_ls-ProjDirectory)]
+  _ls-ExpectedPreprocessPath: [$(_ls-ExpectedPreprocessPath)]
+  _ls-ExpectedVsTemplatePath: [$(_ls-ExpectedVsTemplatePath)]
+  _ls-FoundPreprocessFile: [$(_ls-FoundPreprocessFile)]
+  _ls-FoundVsTemplateFile: [$(_ls-FoundVsTemplateFile)]
+  _ls-FoundRequiredFiles: [$(_ls-FoundRequiredFiles)]
+  _ls-ProjFileName: [$(_ls-ProjFileName)]
+  _ls-IncludeTemplate: [$(_ls-IncludeTemplate)]
+"
+             Importance="low"/>
+    
     <ItemGroup>
       <ls-VsNewProjTemplateFiles
         Include="$(_ls-ExpectedVsTemplatePath)"
@@ -946,10 +959,10 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
   <Target Name="BuildStandAlone" DependsOnTargets="$(BuildStandAloneDependsOn)"/>
   <Target Name="CopyTemplatesToOutputPath" DependsOnTargets="ls-AddCreatedItemTemplateZipFilesToProject">
     <Message Text="VSIXSourceItem|VSIXSubPath: %(VSIXSourceItem.Identity)|%(VSIXSourceItem.VSIXSubPath)" Importance="high" />
-    <Message Text="Destfiles: @(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)%(Filename)%(Extension)')" Importance="high"/>
+    <Message Text="Destfiles: @(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)\%(Filename)%(Extension)')" Importance="high"/>
     
     <Copy SourceFiles="@(VSIXSourceItem)"
-          DestinationFiles="@(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)%(Filename)%(Extension)')"
+          DestinationFiles="@(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)\%(Filename)%(Extension)')"
           Condition=" '$(OutputPath)'!='' " />
   </Target>
   <!--************************************************************************************

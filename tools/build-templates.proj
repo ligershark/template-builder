@@ -2,7 +2,15 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
 
   <!--
-  Invoke-MSBuild .\build-templates.proj -targets BuildStandAlone -properties @{'ls-ProjectTemplateRoot'='C:\Data\personal\mycode\side-waffle\Project Templates\\';'ls-ItemTemplateRoot'='C:\Data\personal\mycode\side-waffle\TemplatePack\ItemTemplates\';'BaseIntermediateOutputPath'='C:\temp\_NET\templates-out\';'TemplateSourceRoot'='C:\Data\personal\mycode\side-waffle\';'OutputPath'='bin\Debug\'}
+  Invoke-MSBuild .\build-templates.proj -targets BuildStandAlone -properties @{'ls-TemplateSubFolder'='SideWaffle';'TemplateSourceRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\\';'ls-TemplateReferenceRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\Project Templates\\';'ls-ProjectTemplateRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\Project Templates v0\\';'ls-ItemTemplateRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\Item Templates\\';'BaseIntermediateOutputPath'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\baseintout\sidewaffleremote\\';'OutputPath'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\output\sidewaffleremote\\'}
+  Invoke-MSBuild .\build-templates.proj -targets BuildStandAlone -properties @{
+    'ls-TemplateSubFolder'='SideWaffle';
+    'TemplateSourceRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\\';
+    'ls-TemplateReferenceRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\Project Templates\\';
+    'ls-ProjectTemplateRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\Project Templates v0\\';
+    'ls-ItemTemplateRoot'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\sources\sidewaffleremote\Item Templates\\';
+    'BaseIntermediateOutputPath'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\baseintout\sidewaffleremote\\';
+    'OutputPath'='C:\Users\Sayed\AppData\Local\LigerShark\SideWaffle\DynamicTemplates\output\sidewaffleremote\\'}
   -->
   
   <PropertyGroup Label="TemplateBuilder">
@@ -25,7 +33,7 @@
   <Import Project="$(TemplateBuilderTargets)" Condition="Exists('$(TemplateBuilderTargets)')" Label="TemplateBuilder" />
 
   <Target Name="ValidateProperties">
-    <Message Text="Inside validate properties" Importance="high"/>
+    <Message Text="Inside validate properties" Importance="low"/>
     <Error Condition=" '$(TemplateSourceRoot)'=='' " Text="TemplateSourceRoot is a required property but it is empty"/>
     <Error Condition="!Exists('$(TemplateSourceRoot)')" Text="[$(TemplateSourceRoot)] was not found on"/>
 
@@ -40,9 +48,7 @@
     <Error Text="BaseIntermediateOutputPath is a required property but it is empty" Condition=" '$(BaseIntermediateOutputPath)'=='' "/>    
     <Error Text="OutputPath is a required property but it is empty" Condition=" '$(OutputPath)'=='' "/>
 
-    <MakeDir Directories="$(BaseIntermediateOutputPath);$(OutputPath)"/>
-    
-    <Message Text="Validate done" Importance="high"/>
+    <MakeDir Directories="$(BaseIntermediateOutputPath);$(OutputPath)"/>   
   </Target>
   
   <Target Name="FixProperties">
@@ -61,23 +67,29 @@
     </DiscoverTemplateFilesDependsOn>
   </PropertyGroup>
   <Target Name="DiscoverTemplateFiles" DependsOnTargets="$(DiscoverTemplateFilesDependsOn)">
-    <Message Text="ls-TemplateReferenceRoot: [$(ls-TemplateReferenceRoot)]" Importance="high"/>    
-    <Message Text="ls-ItemTemplateRoot: [$(ls-ItemTemplateRoot)]" Importance="high"/>
+    <Message Text="ls-TemplateReferenceRoot: [$(ls-TemplateReferenceRoot)]" Importance="low"/>    
+    <Message Text="ls-ItemTemplateRoot: [$(ls-ItemTemplateRoot)]" Importance="low"/>
     <ItemGroup>
-      <_templatefiles Include="$(ls-TemplateReferenceRoot)**\_project.vstemplate.xml"/>
-      <TemplateReference Include="%(_templatefiles.rootdir)%(_templatefiles.Directory)%(_templatefiles.filename)%(_templatefiles.extension)">
-        <PathToProject>$(ls-TemplateReferenceRoot)%(RecursiveDir)%(Filename)%(Extension)</PathToProject>
+      <_templatefiles Include="$(ls-TemplateReferenceRoot)**\*.csproj"/>      
+      <TemplateReference Include="@(_templatefiles)">
+        <PathToProject>%(Identity)</PathToProject>
       </TemplateReference>
     </ItemGroup>
+    <Message Text="_templatefiles: @(_templatefiles)" Importance="low"/>
+    <Message Text="TemplateReference:%0a@(TemplateReference->'[%(FullPath) ||| %(PathToProject)]','%0a')" Importance="low"/>
+
+    <Message Text="_templatefiles.identity: [%(_templatefiles.identity)]" Importance="low"/>
+    <Message Text="TemplateReference.PathToProject:[%(TemplateReference.PathToProject)]" Importance="low"/>
   </Target>
+  
   <PropertyGroup>
     <BuildDependsOn>
+      $(CoreCompileDependsOn);
       $(BuildDependsOn);
       ValidateProperties;
       DiscoverTemplateFiles;
+      ls-ProcessItemTemplates;
     </BuildDependsOn>
   </PropertyGroup>
-  <Target Name="Build" DependsOnTargets="$(BuildDependsOn);$(CoreCompileDependsOn);ls-ProcessItemTemplates">
-    <Message Text="Inside build" Importance="high"/>
-  </Target>
+  <Target Name="Build" DependsOnTargets="$(BuildDependsOn)" />
 </Project>
