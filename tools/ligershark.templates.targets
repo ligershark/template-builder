@@ -223,7 +223,7 @@ Project Templates: @(ls-PT-ToRemove)"/>
   <Target Name="ls-DiscoverProjectTemplatesFromTemplateReferences"
           Outputs="%(TemplateReference.PathToProject)"
           Condition=" '@(TemplateReference)'!= '' ">
-
+    <Message Text="TemplateReference: [@(TemplateReference)]" Importance="low"/>
     <ItemGroup>
       <_ls-temp-template-ref-path Remove="@(_ls-temp-template-ref-path)"/>
       <_ls-temp-template-ref-path Include="%(TemplateReference.PathToProject)"/>

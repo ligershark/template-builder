@@ -58,7 +58,13 @@
       <ls-ItemTemplateRoot Condition="!HasTrailingSlash('$(ls-ItemTemplateRoot)')">$(ls-ItemTemplateRoot)\</ls-ItemTemplateRoot>
     </PropertyGroup>
   </Target>
-
+  <ItemGroup>
+    <!-- 
+    This is a hack to allow TemplateReference to be populated in 
+    a target. This value needs to be removed, and is in the DiscoverTemplateFiles target below
+    -->
+    <TemplateReference Include="removeme"/>
+  </ItemGroup>
   <PropertyGroup>
     <DiscoverTemplateFilesDependsOn>
       $(DiscoverTemplateFilesDependsOn);
@@ -70,7 +76,8 @@
     <Message Text="ls-TemplateReferenceRoot: [$(ls-TemplateReferenceRoot)]" Importance="low"/>    
     <Message Text="ls-ItemTemplateRoot: [$(ls-ItemTemplateRoot)]" Importance="low"/>
     <ItemGroup>
-      <_templatefiles Include="$(ls-TemplateReferenceRoot)**\*.csproj"/>      
+      <_templatefiles Include="$(ls-TemplateReferenceRoot)**\*.csproj"/>
+      <TemplateReferene Remove="removeme"/>
       <TemplateReference Include="@(_templatefiles)">
         <PathToProject>%(Identity)</PathToProject>
       </TemplateReference>
@@ -80,9 +87,10 @@
 
     <Message Text="_templatefiles.identity: [%(_templatefiles.identity)]" Importance="low"/>
     <Message Text="TemplateReference.PathToProject:[%(TemplateReference.PathToProject)]" Importance="low"/>
+    <Message Text="TemplateReference: [@(TemplateReference)]" Importance="low"/>
   </Target>
   
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <BuildDependsOn>
       $(CoreCompileDependsOn);
       $(BuildDependsOn);
@@ -91,5 +99,13 @@
       ls-ProcessItemTemplates;
     </BuildDependsOn>
   </PropertyGroup>
-  <Target Name="Build" DependsOnTargets="$(BuildDependsOn)" />
+  <Target Name="Build" DependsOnTargets="$(BuildDependsOn)" />-->
+  <PropertyGroup>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      ValidateProperties;
+      DiscoverTemplateFiles;
+    </BuildDependsOn>
+  </PropertyGroup>
+  <Target Name="Build" DependsOnTargets="$(BuildDependsOn);$(CoreCompileDependsOn);ls-ProcessItemTemplates" />
 </Project>
