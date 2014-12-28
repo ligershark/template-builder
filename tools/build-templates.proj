@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
 
   <!--
-  Invoke-MSBuild .\build-templates.proj -properties @{'ls-ProjectTemplateRoot'='C:\Data\personal\mycode\side-waffle\Project Templates\\';'ls-ItemTemplateRoot'='C:\Data\personal\mycode\side-waffle\TemplatePack\ItemTemplates\';'BaseIntermediateOutputPath'='C:\temp\_NET\templates-out\';'TemplateSourceRoot'='C:\Data\personal\mycode\side-waffle\';'OutputPath'='bin\Debug\'}
+  Invoke-MSBuild .\build-templates.proj -targets BuildStandAlone -properties @{'ls-ProjectTemplateRoot'='C:\Data\personal\mycode\side-waffle\Project Templates\\';'ls-ItemTemplateRoot'='C:\Data\personal\mycode\side-waffle\TemplatePack\ItemTemplates\';'BaseIntermediateOutputPath'='C:\temp\_NET\templates-out\';'TemplateSourceRoot'='C:\Data\personal\mycode\side-waffle\';'OutputPath'='bin\Debug\'}
   -->
   
   <PropertyGroup Label="TemplateBuilder">
@@ -25,16 +25,22 @@
   <Import Project="$(TemplateBuilderTargets)" Condition="Exists('$(TemplateBuilderTargets)')" Label="TemplateBuilder" />
 
   <Target Name="ValidateProperties">
-    <Error Condition=" '$(TemplateSourceRoot)'=='' "
-           Text="TemplateSourceRoot is a required property but it is empty"/>
-    <Error Text="ls-ProjectTemplateRoot is a required property but it is empty"
-           Condition=" '$(ls-ProjectTemplateRoot)'=='' "/>
-    <Error Text="ls-ItemTemplateRoot is a required property but it is empty"
-           Condition=" '$(ls-ItemTemplateRoot)'=='' "/>
-    <Error Text="BaseIntermediateOutputPath is a required property but it is empty"
-           Condition=" '$(BaseIntermediateOutputPath)'=='' "/>
-    <Error Text="OutputPath is a required property but it is empty"
-           Condition=" '$(OutputPath)'=='' "/>
+    <Message Text="Inside validate properties" Importance="high"/>
+    <Error Condition=" '$(TemplateSourceRoot)'=='' " Text="TemplateSourceRoot is a required property but it is empty"/>
+    <Error Condition="!Exists('$(TemplateSourceRoot)')" Text="[$(TemplateSourceRoot)] was not found on"/>
+      
+    <Error Text="ls-ProjectTemplateRoot is a required property but it is empty" Condition=" '$(ls-ProjectTemplateRoot)'=='' "/>
+    <!--<Error Condition="!Exists('$(ls-ProjectTemplateRoot)')" Text="[$(ls-ProjectTemplateRoot)] was not found on"/>-->
+    
+    <Error Text="ls-ItemTemplateRoot is a required property but it is empty" Condition=" '$(ls-ItemTemplateRoot)'=='' "/>
+    <!--<Error Condition="!Exists('$(ls-ItemTemplateRoot)')" Text="[$(ls-ItemTemplateRoot)] was not found on"/>-->
+    
+    <Error Text="BaseIntermediateOutputPath is a required property but it is empty" Condition=" '$(BaseIntermediateOutputPath)'=='' "/>    
+    <Error Text="OutputPath is a required property but it is empty" Condition=" '$(OutputPath)'=='' "/>
+
+    <MakeDir Directories="$(BaseIntermediateOutputPath);$(OutputPath)"/>
+    
+    <Message Text="Validate done" Importance="high"/>
   </Target>
   
   <Target Name="FixProperties">

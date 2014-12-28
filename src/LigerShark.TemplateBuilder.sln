@@ -15,6 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemplateBuilder", "Template
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuGet", "NuGet", "{48D37B16-4C91-4F59-8338-E1D605869F09}"
 	ProjectSection(SolutionItems) = preProject
+		..\tools\build-templates.proj = ..\tools\build-templates.proj
 		..\tools\Install.ps1 = ..\tools\Install.ps1
 		..\tools\ligershark.templates.targets = ..\tools\ligershark.templates.targets
 		..\content\Properties\template-builder.props = ..\content\Properties\template-builder.props

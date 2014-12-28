@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>TemplateBuilder</id>
-    <version>1.1.2-beta1</version>
+    <version>1.1.2-beta2</version>
     <authors>Sayed Ibrahim Hashimi</authors>
     <owners>Sayed Ibrahim Hashimi</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>

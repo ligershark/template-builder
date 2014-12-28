@@ -931,7 +931,27 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
       </VSIXSourceItem>
     </ItemGroup>
   </Target>
-  
+
+  <!--
+    Note: the following targets should only be called when the build is being driven by a standalone build.proj
+    and not a VSIX project or a Visual Studio package project
+  -->
+  <PropertyGroup>
+    <BuildStandAloneDependsOn>
+      $(BuildStandAloneDependsOn);
+      Build;
+      CopyTemplatesToOutputPath;
+    </BuildStandAloneDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildStandAlone" DependsOnTargets="$(BuildStandAloneDependsOn)"/>
+  <Target Name="CopyTemplatesToOutputPath" DependsOnTargets="ls-AddCreatedItemTemplateZipFilesToProject">
+    <Message Text="VSIXSourceItem|VSIXSubPath: %(VSIXSourceItem.Identity)|%(VSIXSourceItem.VSIXSubPath)" Importance="high" />
+    <Message Text="Destfiles: @(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)%(Filename)%(Extension)')" Importance="high"/>
+    
+    <Copy SourceFiles="@(VSIXSourceItem)"
+          DestinationFiles="@(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)%(Filename)%(Extension)')"
+          Condition=" '$(OutputPath)'!='' " />
+  </Target>
   <!--************************************************************************************
       Tasks defined below
   ************************************************************************************-->
