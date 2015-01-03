@@ -96,8 +96,9 @@ function EnsurePsbuildInstalled{
 
 <#
 .SYNOPSIS
-    If nuget is in the tools
-    folder then it will be downloaded there.
+    This will return the path to nuget.exe. If it is not in the tools
+    folder then it will be downloaded there and then the path will 
+    be returned.
 #>
 function Get-Nuget{
     [cmdletbinding()]
