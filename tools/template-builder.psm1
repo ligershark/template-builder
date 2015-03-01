@@ -154,49 +154,60 @@ function UpdateVsixManifest(){
     try{
         # add asset tag if it doesn't
         foreach($vsixManifestFile in $vsixManifestFiles){
-            AddItemTemplateAssetTagToVisxManfiestIfNotExists -vsixFilePathToUpdate $vsixManifestFile
-            AddProjectTemplateAssetTagToVisxManfiestIfNotExists -vsixFilePathToUpdate $vsixManifestFile
+            [xml]$vsixXml = Get-Content $vsixManifestFile
+            AddAssetTagsForTemplates -vsixXml $vsixXml -vsixFilePathToUpdate $vsixManifestFile
         }
     }
     catch{
         "Unable to update the .vsixmanifest file. You may need to add the Asset elements yourself. See the readme which has just opened up.`nError: [{0}]" -f ($_.Exception) | Write-Warning
     }
 }
-
-function AddItemTemplateAssetTagToVisxManfiestIfNotExists(){
+function AddAssetTagsForTemplates{
+    [cmdletbinding()]
     param(
-        [Parameter(Mandatory=$true)]
-        $vsixFilePathToUpdate
+        [Parameter(Mandatory=$true,Position=0)]
+        [xml]$vsixXml,
+        [Parameter(Mandatory=$true,Position=1)]
+        [string]$vsixFilePathToUpdate
     )
-    
-    if(!(Test-Path $vsixFilePathToUpdate)){
-        ".vsixmanifest file not found at [{0}]" -f $vsixFilePathToUpdate | Write-Error
-        return;
-    }
-    
-    [xml]$vsixXml = (Get-Content $vsixFilePathToUpdate)
-    if( ($vsixXml.PackageManifest.Assets -ne $null) -and 
-        ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ItemTemplates'}) ){
-        # if the asset is already there just skip it
-        "`t.vsixmanifest not modified because the 'Output\ItemTemplates' element is already in that file" | Write-Host
-    }
-    else{
-        "`tAdding item template asset tag to .vsixmanifest file {0}" -f $vsixFilePathToUpdate | Write-Host
-        CheckoutIfUnderScc -filePath $vsixFilePathToUpdate
-        # create the element here
-        $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
-        $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ItemTemplate')
-        $newElement.SetAttribute('Path', 'Output\ItemTemplates')
-        # $vsixXml.PackageManifest.Assets.AppendChild($newElement)
+    process{
+        $modifiedXml = $false
+        $assetTag = GetOrCreateAssetsElement -vsixXml $vsixXml
+        # add the item template tag if it's missing
+        if( ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ItemTemplates'}) -eq $null){
+            $itemElement= $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
+            $itemElement.SetAttribute('Type', 'Microsoft.VisualStudio.ItemTemplate') | Out-Null
+            $itemElement.SetAttribute('Path', 'Output\ItemTemplates') | Out-Null
 
-        [System.Xml.XmlElement]$assetTag = (GetOrCreateAssetsElement -vsixXml $vsixXml)
-        if($assetTag){
-            $assetTag.AppendChild($newElement)
-            $vsixXml.Save($vsixFilePathToUpdate)
+            if($assetTag){
+                $assetTag.AppendChild($itemElement) | Out-Null
+                $modifiedXml = $true
+            }
+            else{
+                'Unable to add item template Asset tags to the .vsixmanifest file, please add them manually' | Write-Warning
+            }
         }
-        else{
-            'Unable to add Asset tags to the .vsixmanifest file, please add them manually' | Write-Warning
-        }        
+
+        # add the project template tag if it's missing
+        if( ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ProjectTemplates'}) -eq $null ){
+            # create the element here
+            $projElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
+            $projElement.SetAttribute('Type', 'Microsoft.VisualStudio.ProjectTemplate') | Out-Null
+            $projElement.SetAttribute('Path', 'Output\ProjectTemplates') | Out-Null
+
+            if($assetTag){
+                $assetTag.AppendChild($projElement) | Out-Null
+                $modifiedXml = $true
+            }
+            else{
+                'Unable to add project template Asset tags to the .vsixmanifest file, please add them manually' | Write-Warning
+            }
+        }
+
+        if($modifiedXml){
+            CheckoutIfUnderScc -filePath $vsixFilePathToUpdate | Out-Null
+            $vsixXml.Save($vsixFilePathToUpdate) | Out-Null
+        }
     }
 }
 function GetOrCreateAssetsElement(){
@@ -213,101 +224,13 @@ function GetOrCreateAssetsElement(){
     }
 
     if($assetTag -eq $null){
-        $newElement = $vsixXml.CreateElement('Assets', $vsixXml.DocumentElement.NamespaceURI)
-        $vsixXml.PackageManifest.AppendChild($newElement) | Out-Null
-        $result = $newElement
+        $assetTag = $vsixXml.CreateElement('Assets', $vsixXml.DocumentElement.NamespaceURI)
+        $vsixXml.PackageManifest.AppendChild($assetTag) | Out-Null
     }
 
     # return the element
     $assetTag
 }
-function AddProjectTemplateAssetTagToVisxManfiestIfNotExists(){
-    param(
-        [Parameter(Mandatory=$true)]
-        $vsixFilePathToUpdate
-    )
-    
-    if(!(Test-Path $vsixFilePathToUpdate)){
-        ".vsixmanifest file not found at [{0}]" -f $vsixFilePathToUpdate | Write-Error
-    }
-    else{
-        [xml]$vsixXml = (Get-Content $vsixFilePathToUpdate)
-        if( ($vsixXml.PackageManifest.Assets.Asset | Where-Object {$_.Path -eq 'Output\ProjectTemplates'}) ){
-            # if the asset is already there just skip it
-            "`t.vsixmanifest not modified because the 'Output\ProjectTemplates' element is already in that file" | Write-Host
-        }
-        else{
-            "`tAdding project template asset tag to .vsixmanifest file {0}" -f $vsixFilePathToUpdate | Write-Host
-            CheckoutIfUnderScc -filePath $vsixFilePathToUpdate
-            # create the element here
-            $newElement = $vsixXml.CreateElement('Asset', $vsixXml.DocumentElement.NamespaceURI)
-            $newElement.SetAttribute('Type', 'Microsoft.VisualStudio.ProjectTemplate')
-            $newElement.SetAttribute('Path', 'Output\ProjectTemplates')
-            $assetTag = (GetOrCreateAssetsElement -vsixXml $vsixXml)
-            if($assetTag){
-                $assetTag.AppendChild($newElement)
-                $vsixXml.Save($vsixFilePathToUpdate)
-            }
-            else{
-                'Unable to add Asset tags to the .vsixmanifest file, please add them manually [AddProjectTemplateAssetTagToVisxManfiestIfNotExists]' | Write-Warning
-            }
-        }
-    }
-}
-
-function UpdateProjectTemplateFilesToNone(){
-    param(
-        $projet = (Get-Project)
-    )
-
-    $projTemplatesItem = ($project.ProjectItems | Where-Object { $_.Name.Contains("ProjectTemplates") })
-    if(!($projTemplatesItem)){
-        return
-    }
-
-    # we need to loop through each sub item and mark all files as None
-    MarkAllChildrenAsNone -$projTemplatesItem
-}
-
-function MarkAllChildrenAsNone(){
-    param(
-    [Parameter(Mandatory=$true)]
-    $projectItem
-    )
-
-    foreach($pItem in $projectItem.ProjectItems){
-        # mark the item as None and recurse
-        MarkItemAsNone -projectItem $pItem
-
-        if($pItem.ProjectItems) {
-            MarkAllChildrenAsNone $pItem.Collection
-        }
-    }
-}
-
-function MarkItemAsNone(){
-    param(
-    [Parameter(Mandatory=$true)]
-    $projectItem
-    )
-
-    # we need to see if the $projectItem has a BuildAction property and if so set it
-    
-    # we will supress the error message as it's by design, but we need to restore the $ErrorActionPreference value
-    $prevErrorAction = $ErrorActionPreference 
-    $ErrorActionPreference= 'silentlycontinue'
-
-    $buildAction = ($projectItem.Properties.Item("BuildAction"))
-    $ErrorActionPreference= $prevErrorAction
-    if($buildAction){
-        # if the property is not null then it exists on the projectitem, update it to None
-        # http://stackoverflow.com/questions/7423564/specify-build-action-of-content-nuget
-        $projectItem.Properties.Item("BuildAction").Value = [int]0
-    }
-}
-
-
-Export-ModuleMember -function UpdateProjectTemplateFilesToNone
 
 # just for debugging, should be removed
 Export-ModuleMember -function *
