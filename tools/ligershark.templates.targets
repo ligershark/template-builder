@@ -88,6 +88,7 @@
                      COMReference;
                      DocumentationProjectOutputGroupOutput;
                      XapFilesInputCollection;
+                     BootstrapperPackage;
                      Import"/>
   </ItemGroup>
   <Target Name="CopyMSBuildFilesToLocalAppData"
