@@ -76,7 +76,7 @@ function EnsurePsbuildInstalled{
         [string]$psbuildInstallUrl='https://raw.github.com/ligershark/psbuild/master/src/GetPSBuild.ps1'
     )
     process{
-        if($installPsbuildIfMissing -and !(Get-Module -listAvailable 'psbuild')){(new-object Net.WebClient).DownloadString("https://raw.github.com/ligershark/psbuild/master/src/GetPSBuild.ps1") | iex
+        if($installPsbuildIfMissing -and !(Get-Module -listAvailable 'psbuild')){
             'Attempting to download psbuild install script from [{0}]' -f  $psbuildInstallUrl | Write-Message
             (new-object Net.WebClient).DownloadString($psbuildInstallUrl) | iex
         }
