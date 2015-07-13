@@ -6,7 +6,6 @@
   1. Discover all .vstemplate files
   2. For each .vstemplate file, go up one folder and create a .zip from the content (exluding the _Definitions folder)
   -->
-
   <PropertyGroup>
     <UseHostCompilerIfAvailable>false</UseHostCompilerIfAvailable>
     <CodeContractsEnableRuntimeChecking>false</CodeContractsEnableRuntimeChecking>
@@ -64,6 +63,11 @@
     <ls-UseHardLinksForItemTemplatesCopy Condition=" '$(ls-UseHardLinksForItemTemplatesCopy)'=='' ">false</ls-UseHardLinksForItemTemplatesCopy>
 
     <ls-enable-remove-proj-extensions Condition=" '$(ls-enable-remove-proj-extensions)'=='' ">true</ls-enable-remove-proj-extensions>
+
+    <RoboCopyExePath Condition=" '$(RoboCopyExePath)'=='' and Exists('$([System.Environment]::SystemDirectory)\robocopy.exe')">$([System.Environment]::SystemDirectory)\robocopy.exe</RoboCopyExePath>
+    <RoboCopyExePath Condition=" '$(RoboCopyExePath)'=='' ">$(localappdata)\LigerShark\tools\robocopy.exe</RoboCopyExePath>
+    <RoboCopyExeDownloadUrl Condition=" '$(RoboCopyExeDownloadUrl)'=='' ">https://dl.dropboxusercontent.com/u/40134810/SideWaffle/tools/robocopy.exe</RoboCopyExeDownloadUrl>
+    <RobocopyLoggingOptions Condition=" '$(RobocopyLoggingOptions)'=='' ">/NFL /NDL /NJS /NJH /NP</RobocopyLoggingOptions>
   </PropertyGroup>
 
   <ItemGroup>
@@ -435,6 +439,7 @@ ls-DiscoverProjectTemplatesFromTemplateReferences
   <PropertyGroup>
     <ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
       $(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn);
+      GetRobocopy;
     </ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
   </PropertyGroup>
   <ItemGroup>
@@ -519,43 +524,25 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
     </CreateTemplateTask>
 
+    <!-- TODO: now that we are copying the entire folder I think this step can be removed -->    
     <Copy SourceFiles="@(_ls-NewProjFilesToCopyRaw->'$(_ls-TemplateFolder2)%(Identity)')"
           DestinationFiles="@(_ls-NewProjFilesToCopyRaw->'$(ls-DestTemplateOutputRoot)%(Identity)')">
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
-    
-    <!-- 
-    Copy over any files that might be referenced by 
-    .vstemplate file but not in project (i.e. images)
-    -->
     <ItemGroup>
-      <_ls-extraprojfiles Remove="@(_ls-extraprojfiles)"/>
-      <_ls-extraprojfiles Include="$(_ls-projectPath)**\*.%(ls-projTempFileExtToAlwaysCopy.Identity)"/>
+      <ls-FoldersToSkip Include="node_modules;bower_components"/>
     </ItemGroup>
-    
-    <Message Text="
-_ls-projectPath: [$(_ls-projectPath)]
-_ls-NewProjFilesToCopyRaw: @(_ls-NewProjFilesToCopyRaw)
-_ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
-    
-    <Copy SourceFiles="@(_ls-extraprojfiles)"
-          DestinationFiles="@(_ls-extraprojfiles->'$(ls-DestTemplateOutputRoot)%(RecursiveDir)%(FileName)%(Extension)')"
-          SkipUnchangedFiles="true">
-      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
-    </Copy>
-    
-    <!-- There may be some loose TemplateBuilder files that need to be copied if so copy those too -->
-    <ItemGroup>
-      <_ls-AddlFilesToCopy Remove="@(_ls-AddlFilesToCopy)"/>
-      <_ls-AddlFilesToCopy Include="$(_ls-TemplateFolder2)**\_preprocess.xml"/>
-    </ItemGroup>
-    
-    <Message Text="_ls-AddlFilesToCopy: [@(_ls-AddlFilesToCopy)]" Importance="low"/>
-
-    <Copy SourceFiles="@(_ls-AddlFilesToCopy)"
-          DestinationFiles="@(_ls-AddlFilesToCopy->'$(ls-DestTemplateOutputRoot)%(RecursiveDir)%(Filename)%(Extension)')">
-      <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
-    </Copy>
+    <!-- copy source folder to dest so that the files can be included in the generated vsix -->
+    <PropertyGroup>
+      <_cpysrcdir>$([System.IO.Path]::GetDirectoryName($(_ls-fullPathToFile)))</_cpysrcdir>
+      <_cpysrcdir>$(_cpysrcdir.TrimEnd('\'))</_cpysrcdir>
+      
+      <_cpydestdir>$([System.IO.Path]::GetFullPath( $(ls-DestTemplateOutputRoot) ))</_cpydestdir>
+      <_cpydestdir>$(_cpydestdir.TrimEnd('\'))</_cpydestdir>
+      <_cpycomamnd>"$(RoboCopyExePath)" "$(_cpysrcdir)" "$(_cpydestdir)" $(RobocopyLoggingOptions) /E /XD @(ls-FoldersToSkip,' ')</_cpycomamnd>
+    </PropertyGroup>
+    <Message Text="Copying files with robocopy from [$(_cpysrcdir)] to [$(_cpydestdir)], command [$(_cpycomamnd)]" />
+    <Exec Command="$(_cpycomamnd)" IgnoreExitCode="true" />  
 
     <ItemGroup>
       <_ls-DestProjFile Remove="@(_ls-DestProjFile)"/>
@@ -945,7 +932,18 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
       </VSIXSourceItem>
     </ItemGroup>
   </Target>
-
+  
+  <Target Name="GetRobocopy" Condition="!Exists('$(RoboCopyExePath)')">
+    <Message Text="Downloading robocopy.exe from [$(RoboCopyExeDownloadUrl)] to [$(RoboCopyExePath)]" />
+    <ItemGroup>
+      <_robocopyexeitem Include="$(RoboCopyExePath)" />
+    </ItemGroup>
+    <MakeDir Directories="@(_robocopyexeitem->'%(RootDir)%(Directory)')"/>
+    <DownloadFile
+        Address="$(RoboCopyExeDownloadUrl)"
+        FileName="$(RoboCopyExePath)" />
+  </Target>
+  
   <!--
     Note: the following targets should only be called when the build is being driven by a standalone build.proj
     and not a VSIX project or a Visual Studio package project
@@ -966,6 +964,7 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
           DestinationFiles="@(VSIXSourceItem->'$(OutputPath)%(VSIXSubPath)\%(Filename)%(Extension)')"
           Condition=" '$(OutputPath)'!='' " />
   </Target>
+  
   <!--************************************************************************************
       Tasks defined below
   ************************************************************************************-->
@@ -975,4 +974,26 @@ _ls-extraprojfiles: [@(_ls-extraprojfiles)]" Importance="low"/>
   <UsingTask TaskName="CreateTemplateTask" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="ModifyProject" AssemblyFile="$(ls-TasksRoot)LigerShark.TemplateBuilder.Tasks.dll"/>
   <UsingTask TaskName="TransformXml" AssemblyFile="$(ls-SlowCheetahXdtTaskRoot)SlowCheetah.Xdt.dll"/>
+
+  <PropertyGroup Condition=" '$(ls-msbuildtasks-path)'=='' ">
+    <ls-msbuildtasks-path>$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
+    <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(MSBuildFrameworkToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
+    <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(windir)\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
+  </PropertyGroup>
+
+  <UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
+    <!-- http://stackoverflow.com/a/12739168/105999 -->
+    <ParameterGroup>
+      <Address ParameterType="System.String" Required="true"/>
+      <FileName ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            new System.Net.WebClient().DownloadFile(Address, FileName);
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
 </Project>
