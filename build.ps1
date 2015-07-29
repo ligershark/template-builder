@@ -25,8 +25,15 @@ param(
     [switch]$publishFileReplacerToNuget,
 
     [Parameter(ParameterSetName='publishToNuGet')]
-    [string]$nugetApiKey = ($env:NuGetApiKey)
-    )
+    [string]$nugetApiKey = ($env:NuGetApiKey),
+
+    [Parameter(ParameterSetName='setBuildProps')]
+    [switch]$setMSBuildOverrides,
+
+    [Parameter(ParameterSetName='clearBuildProps')]
+    [switch]$clearMSBuildOverrides
+
+)
 
 function Get-ScriptDirectory{
     $Invocation = (Get-Variable MyInvocation -Scope 1).Value
@@ -184,43 +191,71 @@ function Build{
     }
 }
 
-
-
-
-
-# Begin script here
-try{
-    EnsurePsbuildInstalled -psbuildInstallUrl  $psbuildInstallUrl -installPsbuildIfMissing $installPsbuildIfMissing
-
-    if($cleanBeforeBuild -or $publishToNuget){
-        Clean
-    }
-    
-    Build
-
-    $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName
-    $nupkgToPublish = @()
-    if($publishTemplateBuilderToNuget){
-        $package = (Get-ChildItem $outputroot 'TemplateBuilder.*.nupkg')
-        if($package.count -gt 1){
-            throw ('Found more than one file [{0} found] matching ''TemplateBuilder.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
-        }
-        $nupkgToPublish += ($package.FullName)
-    }
-    if($publishFileReplacerToNuget){
-        $package = (Get-ChildItem $outputroot 'file-replacer.*.nupkg')
-        if($package.count -gt 1){
-            throw ('Found more than one file [{0} found] matching ''file-replacer.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
-        }
-        $nupkgToPublish += ($package.FullName)
-    }
-
-    if($nupkgToPublish.Length -gt 0){
-        'nupkgToPublish: [{0}]' -f $nupkgToPublish | Write-Verbose
-        # publish the nuget package
-        PublishNuGetPackage -nugetPackage $nupkgToPublish -nugetApiKey $nugetApiKey
+function Set-MSBuildOverrides{
+    [cmdletbinding()]
+    param(
+        [System.IO.FileInfo]$targetsPath = (Join-Path $scriptDir 'tools\ligershark.templates.targets'),
+        [System.IO.DirectoryInfo]$tasksRoot = (Join-Path $scriptDir 'OutputRoot')
+    )
+    process{
+        'Setting msbuild override env vars' | Write-Output
+        '    [TemplateBuilderTargets]=[{0}]' -f $targetsPath | Write-Output
+        '    [ls-TasksRoot]=[{0}]' -f $tasksRoot | Write-Output
+        $env:TemplateBuilderTargets = $targetsPath
+        ${env:ls-TasksRoot} = "$tasksRoot\"
     }
 }
-catch{
-   throw ("An error has occurred.`nError: [{0}]" -f ($_.Exception))
+
+function Clear-MSBuildOverrides{
+    [cmdletbinding()]
+    param()
+    process{
+        Remove-Item -Path env:TemplateBuilderTargets
+        Remove-Item -Path 'env:ls-TasksRoot'
+    }
+}
+
+if($setMSBuildOverrides){
+    Set-MSBuildOverrides
+}
+elseif($clearMSBuildOverrides){
+    Clear-MSBuildOverrides
+}
+else{
+    # Begin build script here
+    try{
+        EnsurePsbuildInstalled -psbuildInstallUrl  $psbuildInstallUrl -installPsbuildIfMissing $installPsbuildIfMissing
+
+        if($cleanBeforeBuild -or $publishToNuget){
+            Clean
+        }
+    
+        Build
+
+        $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName
+        $nupkgToPublish = @()
+        if($publishTemplateBuilderToNuget){
+            $package = (Get-ChildItem $outputroot 'TemplateBuilder.*.nupkg')
+            if($package.count -gt 1){
+                throw ('Found more than one file [{0} found] matching ''TemplateBuilder.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
+            }
+            $nupkgToPublish += ($package.FullName)
+        }
+        if($publishFileReplacerToNuget){
+            $package = (Get-ChildItem $outputroot 'file-replacer.*.nupkg')
+            if($package.count -gt 1){
+                throw ('Found more than one file [{0} found] matching ''file-replacer.*.nupkg'' in the output folder [{1}] ' -f $package.count, $outputroot)
+            }
+            $nupkgToPublish += ($package.FullName)
+        }
+
+        if($nupkgToPublish.Length -gt 0){
+            'nupkgToPublish: [{0}]' -f $nupkgToPublish | Write-Verbose
+            # publish the nuget package
+            PublishNuGetPackage -nugetPackage $nupkgToPublish -nugetApiKey $nugetApiKey
+        }
+    }
+    catch{
+       throw ("An error has occurred.`nError: [{0}]" -f ($_.Exception))
+    }
 }
