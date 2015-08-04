@@ -5,7 +5,7 @@ param(
     [string]$configuration = 'Release',
 
     [Parameter(ParameterSetName='build')]
-    [string]$visualStudioVersion='11.0',
+    [string]$visualStudioVersion='12.0',
 
     [Parameter(ParameterSetName='build')]
     [switch]$cleanBeforeBuild,
