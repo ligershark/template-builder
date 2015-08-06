@@ -530,16 +530,17 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
     <ItemGroup>
-      <ls-FoldersToSkip Include="node_modules;bower_components"/>
+      <ls-FoldersToSkip Include="node_modules;bower_components;_Definitions"/>
     </ItemGroup>
     <!-- copy source folder to dest so that the files can be included in the generated vsix -->
     <PropertyGroup>
+      <ls-CopyExcludeStatement Condition=" '$(ls-CopyExcludeStatement)'=='' ">*.user *.suo project.lock.json _preprocess.xml sw-*icon.png *swexclude*</ls-CopyExcludeStatement>
       <_cpysrcdir>$([System.IO.Path]::GetDirectoryName($(_ls-fullPathToFile)))</_cpysrcdir>
       <_cpysrcdir>$(_cpysrcdir.TrimEnd('\'))</_cpysrcdir>
       
       <_cpydestdir>$([System.IO.Path]::GetFullPath( $(ls-DestTemplateOutputRoot) ))</_cpydestdir>
       <_cpydestdir>$(_cpydestdir.TrimEnd('\'))</_cpydestdir>
-      <_cpycomamnd>"$(RoboCopyExePath)" "$(_cpysrcdir)" "$(_cpydestdir)" $(RobocopyLoggingOptions) /E /XD @(ls-FoldersToSkip,' ')</_cpycomamnd>
+      <_cpycomamnd>"$(RoboCopyExePath)" "$(_cpysrcdir)" "$(_cpydestdir)" $(RobocopyLoggingOptions) /E /XD @(ls-FoldersToSkip,' ') /XF $(ls-CopyExcludeStatement)</_cpycomamnd>     
     </PropertyGroup>
     <Message Text="Copying files with robocopy from [$(_cpysrcdir)] to [$(_cpydestdir)], command [$(_cpycomamnd)]" />
     <Exec Command="$(_cpycomamnd)" IgnoreExitCode="true" />  
