@@ -500,7 +500,7 @@ ls-DiscoverProjectTemplatesFromTemplateReferences
     
     <ItemGroup>
       <_ls-DestVsTemplateItem Include="$(_ls-DestVsTemplateFullPath)"/>
-      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml;sw-file-icon.png;"/>
+      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml;sw-file-icon.png;sw-file-previewimage.png;"/>
     </ItemGroup>
     <Message Text="
 ls-VsNewProjTemplateFiles.Identity: [%(ls-VsNewProjTemplateFiles.Identity)]
