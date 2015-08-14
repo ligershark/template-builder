@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildProjectDirectory)\Properties\template-builder.props" 
           Condition="Exists('$(MSBuildProjectDirectory)\Properties\template-builder.props')" />
@@ -500,7 +500,9 @@ ls-DiscoverProjectTemplatesFromTemplateReferences
     
     <ItemGroup>
       <_ls-DestVsTemplateItem Include="$(_ls-DestVsTemplateFullPath)"/>
-      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml;sw-file-icon.png;"/>
+      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml;"/>
+      <!-- %2A is the escaped value for the * character. See https://msdn.microsoft.com/en-us/library/bb383819.aspx -->
+      <ls-ProjectTemplateFilesToRemoveOnCopyRegex Include="sw-.%2A;"/>
     </ItemGroup>
     <Message Text="
 ls-VsNewProjTemplateFiles.Identity: [%(ls-VsNewProjTemplateFiles.Identity)]
@@ -520,8 +522,10 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       VsTemplateShell="%(ls-VsNewProjTemplateFiles.FullPath)"
       DestinationTemplateLocation="$(_ls-DestVsTemplateFullPath)"
       FilesExclude="@(ls-ProjectTemplateFilesToRemoveOnCopy)"
+      FilesExcludeRegex="@(ls-ProjectTemplateFilesToRemoveOnCopyRegex)"
       NonFileTypes="@(ls-NonFileTypes)">
       <Output TaskParameter="FilesToCopy" ItemName="_ls-NewProjFilesToCopyRaw"/>
+      <Output TaskParameter="FilesToExclude" ItemName="_ls-FilesToExcludeRaw"/>
     </CreateTemplateTask>
 
     <!-- TODO: now that we are copying the entire folder I think this step can be removed -->    
@@ -534,7 +538,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     </ItemGroup>
     <!-- copy source folder to dest so that the files can be included in the generated vsix -->
     <PropertyGroup>
-      <ls-CopyExcludeStatement Condition=" '$(ls-CopyExcludeStatement)'=='' ">*.user *.suo project.lock.json _preprocess.xml sw-*icon.png *swexclude*</ls-CopyExcludeStatement>
+      <ls-CopyExcludeStatement Condition=" '$(ls-CopyExcludeStatement)'=='' ">*.user *.suo project.lock.json _preprocess.xml</ls-CopyExcludeStatement>
       <_cpysrcdir>$([System.IO.Path]::GetDirectoryName($(_ls-fullPathToFile)))</_cpysrcdir>
       <_cpysrcdir>$(_cpysrcdir.TrimEnd('\'))</_cpysrcdir>
       
@@ -552,7 +556,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
 
     <!-- Copy the project file to the dest but remove the TemplateBuilder elements during that copy -->
     <ModifyProject SourceProjectFilePath="$(_ls-fullPathToFile)"
-                   ItemsToRemove="@(ls-ProjectTemplateFilesToRemoveOnCopy)"
+                   ItemsToRemove="@(_ls-FilesToExcludeRaw)"
                    DestProjectFilePath="@(_ls-DestProjFile->'$(ls-DestTemplateOutputRoot)%(Filename)%(Extension)')"
                    Condition=" '$(ls-EnableModifyProjectOnCopyToRemoveTemplateElements)'=='true' "/>
     <Copy SourceFiles="$(_ls-fullPathToFile)"
@@ -702,6 +706,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       VsTemplateShell="%(ls-MultiProjTemplateFilesToExpand.FullPath)"
       DestinationTemplateLocation="%(ls-MultiProjTemplateFilesToExpand.FullPath)"
       FilesExclude="@(ls-ProjectTemplateFilesToRemoveOnCopy)"
+      FilesExcludeRegex="@(ls-ProjectTemplateFilesToRemoveOnCopyRegex)"
       NonFileTypes="@(ls-NonFileTypes)"
       UpdateProjectElement="false"
       />
