@@ -538,7 +538,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     </ItemGroup>
     <!-- copy source folder to dest so that the files can be included in the generated vsix -->
     <PropertyGroup>
-      <ls-CopyExcludeStatement Condition=" '$(ls-CopyExcludeStatement)'=='' ">*.user *.suo project.lock.json _preprocess.xml</ls-CopyExcludeStatement>
+      <ls-CopyExcludeStatement Condition=" '$(ls-CopyExcludeStatement)'=='' ">*.user *.suo project.lock.json</ls-CopyExcludeStatement>
       <_cpysrcdir>$([System.IO.Path]::GetDirectoryName($(_ls-fullPathToFile)))</_cpysrcdir>
       <_cpysrcdir>$(_cpysrcdir.TrimEnd('\'))</_cpysrcdir>
       
