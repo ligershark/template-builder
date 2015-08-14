@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +10,6 @@ using Microsoft.Build.Utilities;
 
 namespace LigerShark.TemplateBuilder.Tasks {
     public class CreateTemplateTask : Task {
-        
         public string ProjectFile { get; set; }
 
         [Required]
@@ -51,6 +50,19 @@ namespace LigerShark.TemplateBuilder.Tasks {
             };
 
             UpdateProjectElement = true;
+        }
+
+        public HashSet<string> GetFiles(string projectDirectoryPath) {
+            HashSet<string> files = new HashSet<string>();
+
+            foreach (string filePath in Directory.EnumerateFiles(projectDirectoryPath, "*", SearchOption.AllDirectories)) {
+                var filePathLower = filePath
+                    .Replace(projectDirectoryPath, string.Empty)
+                    .TrimStart('\\');
+                files.Add(filePathLower);
+            }
+
+            return files;
         }
 
         public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
@@ -160,38 +172,51 @@ namespace LigerShark.TemplateBuilder.Tasks {
             // projectElement.Add(new XAttribute(XName.Get("ReplaceParameters"), true));
 
             workingTemplate.Root.Add(templateContentElement);
-            var sourceFileNames = new HashSet<string>();
-            var targetFileNames = new HashSet<string>();
 
             List<string> filesToExclude = GetFilesToExlucudeAsList();
-            RecurseItems(projectElement, sourceFileNames, targetFileNames);
             _filesToCopy = new List<string>();
             var itemsToMerge = new List<string>();
 
-            foreach (var item in project.Items) {
-                if (!IsPotentialSourceFile(item)) {
-                    continue;
+            if (string.Equals(projectExtension, ".xproj", StringComparison.OrdinalIgnoreCase)) {
+                var files = GetFiles(Path.GetDirectoryName(project.FullPath));
+                foreach (var file in files) {
+                    if (!filesToExclude.Contains(file.ToLower()) &&
+                        !string.Equals(Path.GetExtension(file), ".xproj", StringComparison.OrdinalIgnoreCase)) {
+                        _filesToCopy.Add(file);
+                        itemsToMerge.Add(file);
+                    }
                 }
+            }
+            else {
+                var sourceFileNames = new HashSet<string>();
+                var targetFileNames = new HashSet<string>();
 
-                var name = item.Include;
-                var lowerName = name.ToLower();
+                RecurseItems(projectElement, sourceFileNames, targetFileNames);
 
-                if (targetFileNames.Contains(lowerName)) {
-                    continue;
+                foreach (var item in project.Items) {
+                    if (!IsPotentialSourceFile(item)) {
+                        continue;
+                    }
+
+                    var name = item.Include;
+                    var lowerName = name.ToLower();
+
+                    if (targetFileNames.Contains(lowerName)) {
+                        continue;
+                    }
+
+                    if (filesToExclude.Contains(lowerName)) {
+                        continue;
+                    }
+
+                    if (item.ItemType != "Folder") {
+                        _filesToCopy.Add(name);
+                    }
+
+                    if (!sourceFileNames.Contains(lowerName)) {
+                        itemsToMerge.Add(name);
+                    }
                 }
-
-                if (filesToExclude.Contains(lowerName)) {
-                    continue;
-                }
-
-                if(item.ItemType != "Folder") {
-                    _filesToCopy.Add(name);
-                }
-
-                if (!sourceFileNames.Contains(lowerName)) {
-                    itemsToMerge.Add(name);
-                }
-
             }
 
             //Copy all non-mutated sections
