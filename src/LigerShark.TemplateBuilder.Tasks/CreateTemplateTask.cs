@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Execution;
@@ -9,7 +10,12 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace LigerShark.TemplateBuilder.Tasks {
-    public class CreateTemplateTask : Task {
+    public class CreateTemplateTask : Task
+    {
+        private const string VsTemplateSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
+
+        private List<string> DefaultNonFileTypesList;
+
         public string ProjectFile { get; set; }
 
         [Required]
@@ -20,17 +26,17 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
         public ITaskItem[] FilesExclude { get; set; }
 
+        public ITaskItem[] FilesExcludeRegex { get; set; }
+
         public List<string> _filesToCopy { get; set; }
 
         public ITaskItem[] NonFileTypes { get; set; }
 
         public bool UpdateProjectElement { get; set; }
+
         [Output]
         public ITaskItem[] FilesToCopy { get; set; }
 
-        private const string VsTemplateSchema = "http://schemas.microsoft.com/developer/vstemplate/2005";
-
-        private List<string> DefaultNonFileTypesList;
         public CreateTemplateTask() {
             this.DefaultNonFileTypesList = new List<string> {
                 "Reference",
@@ -52,7 +58,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             UpdateProjectElement = true;
         }
 
-        public HashSet<string> GetFiles(string projectDirectoryPath) {
+        private HashSet<string> GetFiles(string projectDirectoryPath) {
             HashSet<string> files = new HashSet<string>();
 
             foreach (string filePath in Directory.EnumerateFiles(projectDirectoryPath, "*", SearchOption.AllDirectories)) {
@@ -64,8 +70,12 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             return files;
         }
+        
+        private void RecurseItems(XElement projectItemContainer, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
+            RecurseItems(projectItemContainer, null, null, takenSourceFileNames, takenTargetFileNames);
+        }
 
-        public void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
+        private void RecurseItems(XElement projectItemContainer, string sourcePrefix, string targetPrefix, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
             foreach (var projectItem in projectItemContainer.Elements(XName.Get("ProjectItem", VsTemplateSchema))) {
                 var sourceFileName = projectItem.Value.ToLowerInvariant();
                 var targetFileName = projectItem.Attribute(XName.Get("TargetFileName")).Value.ToLowerInvariant();
@@ -85,10 +95,6 @@ namespace LigerShark.TemplateBuilder.Tasks {
             }
         }
 
-        public void RecurseItems(XElement projectItemContainer, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
-            RecurseItems(projectItemContainer, null, null, takenSourceFileNames, takenTargetFileNames);
-        }
-
         private string GetProjectFile(XDocument vstemplate) {
             string result = ProjectFile;
 
@@ -103,6 +109,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             return result;            
         }
+
         public override bool Execute() {
             var vstemplate = XDocument.Load(VsTemplateShell);
             var workingTemplate = XDocument.Load(VsTemplateShell);
@@ -173,14 +180,13 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             workingTemplate.Root.Add(templateContentElement);
 
-            List<string> filesToExclude = GetFilesToExlucudeAsList();
             _filesToCopy = new List<string>();
             var itemsToMerge = new List<string>();
 
             if (string.Equals(projectExtension, ".xproj", StringComparison.OrdinalIgnoreCase)) {
                 var files = GetFiles(Path.GetDirectoryName(project.FullPath));
                 foreach (var file in files) {
-                    if (!filesToExclude.Contains(file.ToLower()) &&
+                    if (!CanExcludeFile(file.ToLower()) &&
                         !string.Equals(Path.GetExtension(file), ".xproj", StringComparison.OrdinalIgnoreCase)) {
                         _filesToCopy.Add(file);
                         itemsToMerge.Add(file);
@@ -205,7 +211,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                         continue;
                     }
 
-                    if (filesToExclude.Contains(lowerName)) {
+                    if (CanExcludeFile(lowerName)) {
                         continue;
                     }
 
@@ -240,20 +246,35 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             return true;
         }
-        private List<string> GetFilesToExlucudeAsList() {
-            List<string> filesToExclude = new List<string>();
+
+        private bool CanExcludeFile(string fileName) {
+            bool exclude = false;
 
             if (FilesExclude != null) {
                 foreach (var item in FilesExclude) {
-                    if (item == null || string.IsNullOrEmpty(item.ItemSpec)) {
-                        continue;
+                    if (item != null && 
+                        !string.IsNullOrEmpty(item.ItemSpec) &&
+                        string.Equals(fileName, item.ItemSpec.ToLower(), StringComparison.Ordinal)) {
+                        exclude = true;
+                        break;
                     }
-                    filesToExclude.Add(item.ItemSpec.ToLower());
                 }
             }
 
-            return filesToExclude;
+            if (FilesExcludeRegex != null && !exclude) {
+                foreach (var item in FilesExcludeRegex) {
+                    if (item != null &&
+                        !string.IsNullOrEmpty(item.ItemSpec) &&
+                        Regex.IsMatch(fileName, item.ItemSpec)) {
+                        exclude = true;
+                        break;
+                    }
+                }
+            }
+
+            return exclude;
         }
+
         private static void MergeTemplateData(XElement target, XElement source, string childName, object defaultValue) {
             var element = source.Element(XName.Get(childName, VsTemplateSchema));
             var value = defaultValue;
