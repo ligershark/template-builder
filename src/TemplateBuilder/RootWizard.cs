@@ -46,6 +46,12 @@ namespace TemplateBuilder
             //Change the projects location.
             var solutionStructure = projects.Select(AdjustProjectLocation).ToList();
 
+            //Remove the projects from the solution
+            foreach (var project in projects)
+            {
+                _dte2.Solution.Remove(project);
+            }
+
             //Restructure solution
             foreach (var keyValuePair in solutionStructure.Where(keyValuePair => !string.IsNullOrWhiteSpace(keyValuePair.Value)))
             {
@@ -66,7 +72,7 @@ namespace TemplateBuilder
             }
 
             //Delete the old directory
-            Directory.Delete(projectsDir);
+            DeleteDirectory(projectsDir);
         }
 
         public void BeforeOpeningFile(ProjectItem projectItem)
@@ -85,11 +91,11 @@ namespace TemplateBuilder
         }
 
         /// <summary>
-        /// Moves a folder.
+        /// Copies the directory.
         /// </summary>
-        /// <param name="sourceDirectory">The source folder.</param>
-        /// <param name="destDirectory">The dest folder.</param>
-        private static void MoveDirectory(string sourceDirectory, string destDirectory)
+        /// <param name="sourceDirectory">The source directory.</param>
+        /// <param name="destDirectory">The destination directory.</param>
+        private static void CopyDirectory(string sourceDirectory, string destDirectory)
         {
             if (!Directory.Exists(destDirectory))
             {
@@ -103,7 +109,7 @@ namespace TemplateBuilder
                 if (name == null) continue;
 
                 var dest = Path.Combine(destDirectory, name);
-                File.Move(file, dest);
+                File.Copy(file, dest);
             }
 
             var folders = Directory.GetDirectories(sourceDirectory);
@@ -113,10 +119,37 @@ namespace TemplateBuilder
                 if (name == null) continue;
 
                 var dest = Path.Combine(destDirectory, name);
-                MoveDirectory(folder, dest);
+                CopyDirectory(folder, dest);
+            }
+        }
+
+        /// <summary>
+        /// Deletes the directory.
+        /// </summary>
+        /// <param name="directory">The directory.</param>
+        private static void DeleteDirectory(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                return;
             }
 
-            Directory.Delete(sourceDirectory);
+            var files = Directory.GetFiles(directory);
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            }
+
+            var folders = Directory.GetDirectories(directory);
+            foreach (var folder in folders)
+            {
+                var name = Path.GetFileName(folder);
+                if (name == null) continue;
+
+                DeleteDirectory(folder);
+            }
+
+            Directory.Delete(directory);
         }
 
         /// <summary>
@@ -133,9 +166,6 @@ namespace TemplateBuilder
             //Get project parent (this is either a SolutionFolder or solution root (null))
             var parent = project.ParentProjectItem.ContainingProject.Kind == ProjectKinds.vsProjectKindSolutionFolder ? project.ParentProjectItem.ContainingProject : null;
 
-            //Remove the project from the solution
-            _dte2.Solution.Remove(project);
-
             //Get the old project directory
             var oldProjectDir = Path.GetDirectoryName(projectFullName);
 
@@ -148,7 +178,7 @@ namespace TemplateBuilder
             Directory.CreateDirectory(newProjectDir);
 
             //Move the project content to new directory
-            MoveDirectory(oldProjectDir, newProjectDir);
+            CopyDirectory(oldProjectDir, newProjectDir);
 
             return new KeyValuePair<Project, string>(parent, Path.Combine(newProjectDir, projectName));
         }
