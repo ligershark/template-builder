@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EnvDTE;
@@ -127,29 +128,43 @@ namespace TemplateBuilder
         /// Deletes the directory.
         /// </summary>
         /// <param name="directory">The directory.</param>
-        private static void DeleteDirectory(string directory)
+        /// <param name="inUseRetryCount">The in use retry count.</param>
+        private static void DeleteDirectory(string directory, int inUseRetryCount = 3)
         {
-            if (!Directory.Exists(directory))
+            var counter = 0;
+            while (counter < inUseRetryCount)
             {
-                return;
+                try
+                {
+                    if (!Directory.Exists(directory))
+                    {
+                        return;
+                    }
+
+                    var files = Directory.GetFiles(directory);
+                    foreach (var file in files)
+                    {
+                        File.Delete(file);
+                    }
+
+                    var folders = Directory.GetDirectories(directory);
+                    foreach (var folder in folders)
+                    {
+                        var name = Path.GetFileName(folder);
+                        if (name == null) continue;
+
+                        DeleteDirectory(folder);
+                    }
+
+                    Directory.Delete(directory);
+                    break;
+                }
+                catch (Exception)
+                {
+                    System.Threading.Thread.Sleep(2000);
+                    counter++;
+                }
             }
-
-            var files = Directory.GetFiles(directory);
-            foreach (var file in files)
-            {
-                File.Delete(file);
-            }
-
-            var folders = Directory.GetDirectories(directory);
-            foreach (var folder in folders)
-            {
-                var name = Path.GetFileName(folder);
-                if (name == null) continue;
-
-                DeleteDirectory(folder);
-            }
-
-            Directory.Delete(directory);
         }
 
         /// <summary>
