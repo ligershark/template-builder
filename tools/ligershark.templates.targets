@@ -534,7 +534,7 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
       <Output TaskParameter ="CopiedFiles" ItemName="ls-temp-FilesCopied"/>
     </Copy>
     <ItemGroup>
-      <ls-FoldersToSkip Include="node_modules;bower_components;_Definitions"/>
+      <ls-FoldersToSkip Include="node_modules;bower_components;_Definitions;bin;obj"/>
     </ItemGroup>
     <!-- copy source folder to dest so that the files can be included in the generated vsix -->
     <PropertyGroup>
