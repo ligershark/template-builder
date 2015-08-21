@@ -43,7 +43,9 @@
                 solutionDirectoryPath, 
                 customPackagesDirectoryPath);
 
+            bool hasChanged = false;
             Project buildProject = new Project(projectFilePath);
+            
             foreach (ProjectMetadata metadata in buildProject.Items
                 .Where(x => string.Equals(x.ItemType, Reference, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(x => x.Metadata)
@@ -65,6 +67,7 @@
                     string newUnevaluatedValue = relativePackagesDirectoryPath + metadata.UnevaluatedValue.Substring(startIndex);
                     if (!string.Equals(metadata.UnevaluatedValue, newUnevaluatedValue, StringComparison.OrdinalIgnoreCase))
                     {
+                        hasChanged = true;
                         metadata.UnevaluatedValue = newUnevaluatedValue;
                     }
                 }
@@ -74,6 +77,11 @@
                     // know which reference is a NuGet package reference as the folder could be named anything.
                     // So for safety we do nothing.
                 }
+            }
+            
+            if (hasChanged)
+            {
+                project.Save();
             }
         }
 
