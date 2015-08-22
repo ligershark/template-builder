@@ -14,7 +14,6 @@
         private const string SlashPackagesSlash = @"\packages\";
         private const string Reference = "Reference";
         private const string HintPath = "HintPath";
-        private const string CSharpProjectExtension = ".csproj";
 
         #region Public Methods
 
@@ -25,13 +24,6 @@
         public void ProjectFinishedGenerating(global::EnvDTE.Project project)
         {
             string projectFilePath = project.FileName;
-
-            // We don't need to do anything with the new xproj files.
-            if (!string.Equals(Path.GetExtension(projectFilePath), CSharpProjectExtension, StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
             string solutionFilePath = project.CodeModel.DTE.Solution.FileName;
 
             string projectDirectoryPath = Path.GetDirectoryName(projectFilePath);
