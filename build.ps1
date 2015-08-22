@@ -184,6 +184,16 @@ function Build{
 
         # MSBuild.exe build.proj /p:Configuration=Release /p:VisualStudioVersion=11.0 /p:RestorePackages=true /flp1:v=d;logfile=build.d.log /flp2:v=diag;logfile=build.diag.log
 
+        Push-Location
+        try{
+            'Restoring NuGet packages for directory [{0}]' -f (join-path $buildproj.Directory.FullName src) | Write-Host -ForegroundColor Green
+            Set-Location (join-path $buildproj.Directory.FullName src)
+            &(Get-Nuget) restore
+        }
+        finally{
+            Pop-Location
+        }
+
         Invoke-MSBuild -projectsToBuild $buildproj.FullName -properties @{
             'Configuration'=$configuration
             'RestorePackages'='true'
