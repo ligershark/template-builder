@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EnvDTE;
+using EnvDTE100;
 using EnvDTE80;
 using Microsoft.VisualStudio.TemplateWizard;
 
@@ -11,7 +12,7 @@ namespace TemplateBuilder
     public class RootWizard : IWizard
     {
         // Core Solution object
-        private DTE2 _dte2;
+        private Solution4 _solution;
 
         // Use to communicate $saferootprojectname$ to ChildWizard     
         public static Dictionary<string, string> GlobalDictionary = new Dictionary<string, string>();
@@ -21,12 +22,14 @@ namespace TemplateBuilder
         {
             // Place "$saferootprojectname$ in the global dictionary. 
             // Copy from $safeprojectname$ passed in my root vstemplate         
-
-            //Get DTE2 object to alter solution structure
-            _dte2 = automationObject as DTE2;
-
             GlobalDictionary["$destinationdirectory$"] = replacementsDictionary["$destinationdirectory$"];
             GlobalDictionary["$saferootprojectname$"] = replacementsDictionary["$safeprojectname$"];
+
+            if (runKind == WizardRunKind.AsMultiProject)
+            {
+                var dte2 = automationObject as DTE2;
+                if (dte2 != null) _solution = (Solution4)dte2.Solution;
+            }
         }
 
         public bool ShouldAddProjectItem(string filePath)
@@ -36,9 +39,14 @@ namespace TemplateBuilder
 
         public void RunFinished()
         {
+            if (_solution == null)
+            {
+                throw new Exception("No solution found!");
+            }
+
             //Get all projects in solution
             var projects = GetProjects();
-            if (projects == null || !projects.Any()) return;
+            if (projects == null || !projects.Any()) throw new Exception("No projects found.");
 
             //Get the projects directory from first project.
             var projectsDir = Path.GetDirectoryName(Path.GetDirectoryName(projects.First().FullName));
@@ -50,7 +58,7 @@ namespace TemplateBuilder
             //Remove the projects from the solution
             foreach (var project in projects)
             {
-                _dte2.Solution.Remove(project);
+                _solution.Remove(project);
             }
 
             //Restructure solution
@@ -68,7 +76,7 @@ namespace TemplateBuilder
                 else
                 {
                     //Key is null, add project to Solution root.
-                    _dte2.Solution.AddFromFile(keyValuePair.Value);
+                    _solution.AddFromFile(keyValuePair.Value);
                 }
             }
 
@@ -204,7 +212,7 @@ namespace TemplateBuilder
         /// <returns></returns>
         private IList<Project> GetProjects()
         {
-            var projects = _dte2.Solution.Projects;
+            var projects = _solution.Projects;
             var list = new List<Project>();
             var item = projects.GetEnumerator();
 
