@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using EnvDTE;
 using EnvDTE100;
 using EnvDTE80;
@@ -14,6 +15,8 @@ namespace TemplateBuilder
         // Core Solution object
         private Solution4 _solution;
 
+        private IList<Project> _existingProjects;
+
         // Use to communicate $saferootprojectname$ to ChildWizard     
         public static Dictionary<string, string> GlobalDictionary = new Dictionary<string, string>();
 
@@ -21,14 +24,16 @@ namespace TemplateBuilder
         public void RunStarted(object automationObject, Dictionary<string, string> replacementsDictionary, WizardRunKind runKind, object[] customParams)
         {
             // Place "$saferootprojectname$ in the global dictionary. 
-            // Copy from $safeprojectname$ passed in my root vstemplate         
-            GlobalDictionary["$destinationdirectory$"] = replacementsDictionary["$destinationdirectory$"];
+            // Copy from $safeprojectname$ passed in my root vstemplate  
             GlobalDictionary["$saferootprojectname$"] = replacementsDictionary["$safeprojectname$"];
 
             if (runKind == WizardRunKind.AsMultiProject)
             {
                 var dte2 = automationObject as DTE2;
                 if (dte2 != null) _solution = (Solution4)dte2.Solution;
+
+                //Get existing projects.
+                _existingProjects = GetProjects() ?? new Project[0];
             }
         }
 
@@ -41,11 +46,11 @@ namespace TemplateBuilder
         {
             if (_solution == null)
             {
-                throw new Exception("No solution found!");
+                throw new Exception("No solution found.");
             }
 
             //Get all projects in solution
-            var projects = GetProjects();
+            var projects = GetProjects().Except(_existingProjects).ToList();
             if (projects == null || !projects.Any()) throw new Exception("No projects found.");
 
             //Get the projects directory from first project.
@@ -80,8 +85,14 @@ namespace TemplateBuilder
                 }
             }
 
-            //Delete the old directory
-            DeleteDirectory(projectsDir);
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                //Wait for *.sln file and obsolete folder to be created.
+                System.Threading.Thread.Sleep(4000);
+
+                //Delete the old directory
+                DeleteDirectory(projectsDir);
+            });
         }
 
         public void BeforeOpeningFile(ProjectItem projectItem)
@@ -96,7 +107,7 @@ namespace TemplateBuilder
 
         public void ProjectFinishedGenerating(Project project)
         {
-
+            
         }
 
         /// <summary>
