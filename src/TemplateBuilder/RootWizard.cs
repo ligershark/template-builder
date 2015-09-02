@@ -27,14 +27,14 @@ namespace TemplateBuilder
             // Copy from $safeprojectname$ passed in my root vstemplate  
             GlobalDictionary["$saferootprojectname$"] = replacementsDictionary["$safeprojectname$"];
 
-            if (runKind == WizardRunKind.AsMultiProject)
-            {
-                var dte2 = automationObject as DTE2;
-                if (dte2 != null) _solution = (Solution4)dte2.Solution;
+            //Check if WizardRunKind equals AsMultiProject. 
+            if (runKind != WizardRunKind.AsMultiProject) return;
+            
+            var dte2 = automationObject as DTE2;
+            if (dte2 != null) _solution = (Solution4)dte2.Solution;
 
-                //Get existing projects.
-                _existingProjects = GetProjects() ?? new Project[0];
-            }
+            //Get existing projects.
+            _existingProjects = GetProjects() ?? new Project[0];
         }
 
         public bool ShouldAddProjectItem(string filePath)
