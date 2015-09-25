@@ -8,9 +8,15 @@ namespace TemplateBuilder {
         // Add global replacement parameters     
         public void RunStarted(object automationObject, Dictionary<string, string> replacementsDictionary, WizardRunKind runKind, object[] customParams) {
             // Add custom parameters.         
-            replacementsDictionary.Add("$saferootprojectname$", RootWizard.GlobalDictionary["$saferootprojectname$"]);
+            if (RootWizard.GlobalDictionary.ContainsKey("$saferootprojectname$"))
+            {
+                replacementsDictionary.Add("$saferootprojectname$", RootWizard.GlobalDictionary["$saferootprojectname$"]);
+            }
+            else if (SolutionWizard.GlobalDictionary.ContainsKey("$saferootprojectname$"))
+            {
+                replacementsDictionary.Add("$saferootprojectname$", SolutionWizard.GlobalDictionary["$saferootprojectname$"]);
+            }
         }
-
 
         public bool ShouldAddProjectItem(string filePath) {
             return true;
