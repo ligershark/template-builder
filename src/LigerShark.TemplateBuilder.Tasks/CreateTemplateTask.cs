@@ -141,12 +141,18 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             var templateContentElement = vstemplate.Root.Element(XName.Get("TemplateContent", VsTemplateSchema));
             XElement projectElement = null;
+            XElement customParameters = null;
 
             if (templateContentElement != null) {
                 var element = templateContentElement.Element(XName.Get("Project", VsTemplateSchema));
 
                 if (element != null) {
                     projectElement = XElement.Parse(element.ToString());
+                }
+
+                var customParamElement = templateContentElement.Element(XName.Get("CustomParameters", VsTemplateSchema));
+                if (customParamElement != null) {
+                    customParameters = XElement.Parse(customParamElement.ToString());
                 }
 
                 templateContentElement.Remove();
@@ -170,6 +176,9 @@ namespace LigerShark.TemplateBuilder.Tasks {
             // instead of calling RemoveAttribute and then Add we can just call SetAttributeValue below so that we don't
             // remove any attributes we are not aware of
 
+            if (customParameters != null) {
+                templateContentElement.Add(customParameters);
+            }
 
             if (UpdateProjectElement) {                
                 projectElement.SetAttributeValue(XName.Get("TargetFileName"), "$safeprojectname$" + projectExtension);
