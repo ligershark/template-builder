@@ -26,18 +26,52 @@
             string projectFilePath = project.FileName;
             string solutionFilePath = project.CodeModel.DTE.Solution.FileName;
 
+            if (Execute(solutionFilePath, projectFilePath))
+            {
+                project.Save();
+            }
+        }
+
+        public void ProjectItemFinishedGenerating(global::EnvDTE.ProjectItem projectItem)
+        {
+        }
+
+        public void RunFinished()
+        {
+        }
+
+        public void RunStarted(
+            object automationObject,
+            Dictionary<string, string> replacementsDictionary,
+            WizardRunKind runKind,
+            object[] customParams)
+        {
+        }
+
+        public bool ShouldAddProjectItem(string filePath)
+        {
+            return true;
+        }
+
+        #endregion
+
+        #region Private Static Methods
+
+        private static bool Execute(string solutionFilePath, string projectFilePath)
+        {
+            bool hasChanged = false;
+
             string projectDirectoryPath = Path.GetDirectoryName(projectFilePath);
             string solutionDirectoryPath = string.IsNullOrEmpty(solutionFilePath) ? projectDirectoryPath : Path.GetDirectoryName(solutionFilePath);
             string customPackagesDirectoryPath = GetCustomPackagesDirectoryPath(solutionDirectoryPath);
 
             string relativePackagesDirectoryPath = GetRelativePackagesDirectoryPath(
-                projectDirectoryPath, 
-                solutionDirectoryPath, 
+                projectDirectoryPath,
+                solutionDirectoryPath,
                 customPackagesDirectoryPath);
-
-            bool hasChanged = false;
-            Project buildProject = new Project(projectFilePath);
             
+            Project buildProject = new Project(projectFilePath);
+
             foreach (ProjectMetadata metadata in buildProject.Items
                 .Where(x => string.Equals(x.ItemType, Reference, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(x => x.Metadata)
@@ -70,37 +104,9 @@
                     // So for safety we do nothing.
                 }
             }
-            
-            if (hasChanged)
-            {
-                project.Save();
-            }
+
+            return hasChanged;
         }
-
-        public void ProjectItemFinishedGenerating(global::EnvDTE.ProjectItem projectItem)
-        {
-        }
-
-        public void RunFinished()
-        {
-        }
-
-        public void RunStarted(
-            object automationObject,
-            Dictionary<string, string> replacementsDictionary,
-            WizardRunKind runKind,
-            object[] customParams)
-        {
-        }
-
-        public bool ShouldAddProjectItem(string filePath)
-        {
-            return true;
-        }
-
-        #endregion
-
-        #region Private Static Methods
 
         private static string GetRelativePackagesDirectoryPath(
             string projectDirectoryPath, 
@@ -110,7 +116,7 @@
             string relativePackagesDirectoryPath;
             if (customPackagesDirectoryPath == null)
             {
-                relativePackagesDirectoryPath = GetRelativePath(
+                relativePackagesDirectoryPath = PathHelper.GetRelativePath(
                     projectDirectoryPath,
                     solutionDirectoryPath);
             }
@@ -119,66 +125,15 @@
                 // Absolute Custom Packages Path
                 if (Path.IsPathRooted(customPackagesDirectoryPath))
                 {
-                    return GetRelativePath(projectDirectoryPath, customPackagesDirectoryPath);
+                    return PathHelper.GetRelativePath(projectDirectoryPath, customPackagesDirectoryPath);
                 }
 
                 // Relative Custom Packages Path
                 string path = Path.Combine(solutionDirectoryPath, customPackagesDirectoryPath);
-                return GetRelativePath(projectDirectoryPath, path);
+                return PathHelper.GetRelativePath(projectDirectoryPath, path);
             }
 
             return relativePackagesDirectoryPath;
-        }
-
-        /// <summary>
-        /// Creates a relative path from one file or folder to another.
-        /// </summary>
-        /// <param name="fromPath">Contains the directory that defines the start of the relative path.</param>
-        /// <param name="toPath">Contains the path that defines the endpoint of the relative path.</param>
-        /// <returns>The relative path from the start directory to the end path.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="fromPath"/> or <paramref name="toPath"/> is <c>null</c>.</exception>
-        /// <exception cref="UriFormatException"></exception>
-        /// <exception cref="InvalidOperationException"></exception>
-        private static string GetRelativePath(string fromPath, string toPath)
-        {
-            if (string.IsNullOrEmpty(fromPath))
-            {
-                throw new ArgumentNullException("fromPath");
-            }
-
-            if (string.IsNullOrEmpty(toPath))
-            {
-                throw new ArgumentNullException("toPath");
-            }
-
-            Uri fromUri = new Uri(AppendDirectorySeparatorChar(fromPath));
-            Uri toUri = new Uri(AppendDirectorySeparatorChar(toPath));
-
-            if (fromUri.Scheme != toUri.Scheme)
-            {
-                return toPath;
-            }
-
-            Uri relativeUri = fromUri.MakeRelativeUri(toUri);
-            string relativePath = Uri.UnescapeDataString(relativeUri.ToString());
-
-            if (string.Equals(toUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
-            {
-                relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-            }
-
-            return relativePath;
-        }
-
-        private static string AppendDirectorySeparatorChar(string directoryPath)
-        {
-            if (!Path.HasExtension(directoryPath) &&
-                !directoryPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                return directoryPath + Path.DirectorySeparatorChar;
-            }
-
-            return directoryPath;
         }
 
         private static string GetCustomPackagesDirectoryPath(string projectDirectoryPath)
