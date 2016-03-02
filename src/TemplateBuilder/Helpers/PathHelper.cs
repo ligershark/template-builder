@@ -1,4 +1,4 @@
-﻿namespace TemplateBuilder
+﻿namespace TemplateBuilder.Helpers
 {
     using System;
     using System.IO;

@@ -7,6 +7,7 @@
     using Microsoft.Build.Evaluation;
     using Microsoft.VisualStudio.TemplateWizard;
     using NuGet;
+    using TemplateBuilder.Helpers;
 
     public class FixNuGetPackageHintPathsWizard : IWizard
     {
@@ -104,7 +105,7 @@
                     // So for safety we do nothing.
                 }
             }
-
+            
             return hasChanged;
         }
 
