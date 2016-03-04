@@ -34,9 +34,9 @@ environment:
 
 artifacts:
   - path: 'OutputRoot\**\*.nupkg'
-  - path: 'OutputRoot\**\*.dll'
-  - path: 'OutputRoot\**\*.pdb'
-  - path: 'OutputRoot\**\*.config'
+  - path: 'OutputRoot\**\TemplateBuilder*.dll'
+  - path: 'OutputRoot\**\TemplateBuilder*.pdb'
+  - path: 'OutputRoot\**\TemplateBuilder*.config'
 
 nuget:
   account_feed: true
