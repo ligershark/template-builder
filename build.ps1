@@ -186,7 +186,7 @@ function Build{
 
         Push-Location
         try{
-            'Restoring NuGet packages for directory [{0}]' -f (join-path $buildproj.Directory.FullName src) | Write-Host -ForegroundColor Green
+            'Restoring NuGet packages for directory [{0}]' -f (join-path $buildproj.Directory.FullName src) | Write-Output
             Set-Location (join-path $buildproj.Directory.FullName src)
             &(Get-Nuget) restore
         }
