@@ -36,6 +36,12 @@
 
             var relativeUri = fromUri.MakeRelativeUri(toUri);
             var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+            if (string.Equals(relativePath, "./", StringComparison.Ordinal))
+            {
+                // MakeRelativeUri seems to only emit a single '.' when the folders are only one level away from each other.
+                // All other times, it seems to be ok.
+                relativePath = "../";
+            }
 
             if (string.Equals(toUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
             {
