@@ -47,8 +47,7 @@
 
         private static string AppendDirectorySeparatorChar(string directoryPath)
         {
-            if (!Path.HasExtension(directoryPath) &&
-                !directoryPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            if (!directoryPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
             {
                 return directoryPath + Path.DirectorySeparatorChar;
             }
