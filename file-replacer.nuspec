@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>file-replacer</id>
-    <version>0.4.2-alpha</version>
+    <version>0.4.3-alpha</version>
     <authors>Sayed Ibrahim Hashimi</authors>
     <owners>Sayed Ibrahim Hashimi</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
@@ -21,4 +21,9 @@
       <file src="LigerShark.FileReplacer.dll" target="lib\dotnet\LigerShark.FileReplacer.dll" />
 	  <file src="LICENSE.md" target="LICENSE.md" />
   </files>
+  <dependencies>
+    <group targetFramework=".NETStandard1.5">
+      <dependency id="NETStandard.Library" version="[1.0.0-rc2-23819, )" />
+    </group>
+  </dependencies>
 </package>
