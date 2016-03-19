@@ -42,7 +42,7 @@ function Get-ScriptDirectory{
 
 $scriptDir = ((Get-ScriptDirectory) + "\")
 
-$buildproj = (get-item (Join-Path $scriptDir 'build.proj'))
+$buildproj = (get-item (Join-Path $scriptDir 'main-build.proj'))
 
 function Filter-String{
 [cmdletbinding()]
@@ -182,7 +182,7 @@ function Build{
         'Build started' | Write-Message
         
 
-        # MSBuild.exe build.proj /p:Configuration=Release /p:VisualStudioVersion=11.0 /p:RestorePackages=true /flp1:v=d;logfile=build.d.log /flp2:v=diag;logfile=build.diag.log
+        # MSBuild.exe main-build.proj /p:Configuration=Release /p:VisualStudioVersion=11.0 /p:RestorePackages=true /flp1:v=d;logfile=build.d.log /flp2:v=diag;logfile=build.diag.log
 
         Push-Location
         try{
