@@ -183,7 +183,7 @@ function Build{
     param()
     begin{
         if($updateNuget){
-            & (Get-Nuget) update self
+            & (Get-Nuget) update -self
         }
     }
     process{
