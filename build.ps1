@@ -205,6 +205,7 @@ function Build{
         Invoke-MSBuild -projectsToBuild $buildproj.FullName -properties @{
             'Configuration'=$configuration
             'RestorePackages'='true'
+            'NugetExe'=(Get-Nuget)
         }
     }
 }

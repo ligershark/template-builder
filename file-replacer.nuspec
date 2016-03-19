@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package >
+<package>
   <metadata>
     <id>file-replacer</id>
     <version>0.4.3-alpha</version>
@@ -13,6 +13,11 @@
       text in files.
     </description>
     <copyright>Copyright 2013-2015 Sayed Ibrahim Hashimi</copyright>
+    <dependencies>
+      <group targetFramework=".NETStandard1.5">
+        <dependency id="NETStandard.Library" version="[1.0.0-rc2-23819, )" />
+      </group>
+    </dependencies>
   </metadata>
   <files>
 	  <file src="file-replacer.psm1" target="tools\" />
@@ -21,9 +26,4 @@
       <file src="LigerShark.FileReplacer.dll" target="lib\dotnet\LigerShark.FileReplacer.dll" />
 	  <file src="LICENSE.md" target="LICENSE.md" />
   </files>
-  <dependencies>
-    <group targetFramework=".NETStandard1.5">
-      <dependency id="NETStandard.Library" version="[1.0.0-rc2-23819, )" />
-    </group>
-  </dependencies>
 </package>
