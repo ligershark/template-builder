@@ -86,7 +86,7 @@
     <!-- nuget pack "C:\...\<filename>.nuspec" -NoPackageAnalysis -OutputDirectory "C:\...\Output\" -->
     <PropertyGroup>
       <_NugetSpecFile>%(_NugetSpecOutputFile.FullPath)</_NugetSpecFile>
-      <_Cmd>"$(NugetExe)" pack "$(_NugetSpecFile)" -NoPackageAnalysis -OutputDirectory "$(OutputRootNoTrailingSlash)" </_Cmd>
+      <_Cmd>"$(NugetExe)" pack "$(_NugetSpecFile)" -OutputDirectory "$(OutputRootNoTrailingSlash)" </_Cmd>
     </PropertyGroup>
 
     <Message Text="_Cmd: $(_Cmd)" Importance="low" />
@@ -168,7 +168,7 @@
     <!-- copy files from source folder to output -->
     <PropertyGroup>
       <_NugetSpecFile>$(OutputRoot)file-replacer.nuspec</_NugetSpecFile>
-      <_Cmd>"$(NugetExe)" pack "$(_NugetSpecFile)" -NoPackageAnalysis -OutputDirectory "$(OutputRootNoTrailingSlash)" </_Cmd>
+      <_Cmd>"$(NugetExe)" pack "$(_NugetSpecFile)" -OutputDirectory "$(OutputRootNoTrailingSlash)" </_Cmd>
     </PropertyGroup>
 
     <Message Text="Building file replacer nuget package with command [$(_Cmd)]" Importance="low" />

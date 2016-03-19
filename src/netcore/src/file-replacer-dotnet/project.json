@@ -1,0 +1,19 @@
+﻿{
+  "version": "0.0.1-alpha",
+  "authors": [ "LigerShark" ],
+  "copyright": "LigerShark",
+  "description": "File replacer",
+  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+  "projectUrl": "https://github.com/ligershark/template-builder",
+  "title": "File replacer",
+  "dependencies": {
+    "System.Runtime": "4.1.0-*",
+    "NETStandard.Library": "1.0.0-rc2-23819"
+  },
+
+  "frameworks": {
+    "netstandard1.5": {
+      "imports": "dotnet5.5"
+    }
+  }
+}

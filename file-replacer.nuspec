@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>file-replacer</id>
-    <version>0.4.4-alpha</version>
+    <version>0.4.5-beta</version>
     <authors>Sayed Ibrahim Hashimi</authors>
     <owners>Sayed Ibrahim Hashimi</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
@@ -13,12 +13,6 @@
       text in files.
     </description>
     <copyright>Copyright 2013-2015 Sayed Ibrahim Hashimi</copyright>
-    <dependencies>
-      <group targetFramework=".NETStandard1.5">
-        <dependency id="System.Runtime" version="[4.1.0-rc2-23819, )" />
-        <dependency id="NETStandard.Library" version="[1.0.0-rc2-23819, )" />
-      </group>
-    </dependencies>
   </metadata>
   <files>
 	  <file src="file-replacer.psm1" target="tools\" />
