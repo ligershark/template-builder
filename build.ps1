@@ -24,6 +24,9 @@ param(
     [Parameter(ParameterSetName='publishToNuGet')]
     [switch]$publishFileReplacerToNuget,
 
+    [Parameter(ParameterSetName='build')]
+    [switch]$updateNuget,
+
     [Parameter(ParameterSetName='publishToNuGet')]
     [string]$nugetApiKey = ($env:NuGetApiKey),
 
@@ -178,6 +181,11 @@ function Clean{
 function Build{
     [cmdletbinding()]
     param()
+    begin{
+        if($updateNuget){
+            & (Get-Nuget) update self
+        }
+    }
     process{
         'Build started' | Write-Message
         
@@ -239,7 +247,7 @@ else{
         if($cleanBeforeBuild -or $publishToNuget){
             Clean
         }
-    
+
         Build
 
         $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName

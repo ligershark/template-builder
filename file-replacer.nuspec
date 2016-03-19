@@ -17,6 +17,8 @@
   <files>
 	  <file src="file-replacer.psm1" target="tools\" />
 	  <file src="LigerShark.FileReplacer.dll" target="tools\LigerShark.FileReplacer.dll" />
+      <file src="LigerShark.FileReplacer.dll" target="lib\LigerShark.FileReplacer.dll" />
+      <file src="LigerShark.FileReplacer.dll" target="lib\dotnet\LigerShark.FileReplacer.dll" />
 	  <file src="LICENSE.md" target="LICENSE.md" />
   </files>
 </package>
