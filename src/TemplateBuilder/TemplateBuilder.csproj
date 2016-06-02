@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChildWizard.cs" />
+    <Compile Include="ReloadProjectWizard.cs" />
     <Compile Include="FixArtifactsPathWizard.cs" />
     <Compile Include="FixNuGetPackageHintPathsWizard.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
