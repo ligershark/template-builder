@@ -73,7 +73,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
 
             return files;
         }
-        
+
         private void RecurseItems(XElement projectItemContainer, HashSet<string> takenSourceFileNames, HashSet<string> takenTargetFileNames) {
             RecurseItems(projectItemContainer, null, null, takenSourceFileNames, takenTargetFileNames);
         }
@@ -110,14 +110,14 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 result = System.IO.Path.Combine(vsTemplateFi.Directory.FullName, projfilename);
             }
 
-            return result;            
+            return result;
         }
 
         public override bool Execute() {
             var vstemplate = XDocument.Load(VsTemplateShell);
             var workingTemplate = XDocument.Load(VsTemplateShell);
             // var workingTemplate = XDocument.Parse(@"<VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""Project"" />");
-            
+
             if (vstemplate.Root == null || workingTemplate.Root == null) {
                 return false;
             }
@@ -180,7 +180,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
                 templateContentElement.Add(customParameters);
             }
 
-            if (UpdateProjectElement) {                
+            if (UpdateProjectElement) {
                 projectElement.SetAttributeValue(XName.Get("TargetFileName"), "$safeprojectname$" + projectExtension);
                 projectElement.SetAttributeValue(XName.Get("File"), realProjectFile);
                 projectElement.SetAttributeValue(XName.Get("ReplaceParameters"), true);
@@ -196,7 +196,8 @@ namespace LigerShark.TemplateBuilder.Tasks {
             _filesToExclude = new List<string>();
             var itemsToMerge = new List<string>();
 
-            if (string.Equals(projectExtension, ".xproj", StringComparison.OrdinalIgnoreCase)) {
+            if (string.Equals(projectExtension, ".xproj", StringComparison.OrdinalIgnoreCase) ||
+                (string.Equals(projectExtension, ".csproj", StringComparison.OrdinalIgnoreCase) && IsNewCsproj(project.FullPath))) {
                 var files = GetFiles(Path.GetDirectoryName(project.FullPath));
                 foreach (var file in files) {
                     if (!CanExcludeFile(file.ToLower(), _filesToExclude) &&
@@ -241,7 +242,7 @@ namespace LigerShark.TemplateBuilder.Tasks {
             //Copy all non-mutated sections
             var mutatedTemplateSections = new[] {"TemplateContent", "TemplateData"};
 
-            // In commit f668a11df0f403520ae1457d3fd5a872ace2107d the entire file is copied first, 
+            // In commit f668a11df0f403520ae1457d3fd5a872ace2107d the entire file is copied first,
             // so this should no longer be needed.
             // var elementsToCopyDirectly = vstemplate.Root.Elements().Where(x => !mutatedTemplateSections.Contains(x.Name.LocalName));
             //foreach (var element in elementsToCopyDirectly) {
@@ -265,12 +266,20 @@ namespace LigerShark.TemplateBuilder.Tasks {
             return true;
         }
 
+        private bool IsNewCsproj(string filePath)
+        {
+            var xml = File.ReadAllText(filePath);
+            var document = XDocument.Parse(xml);
+            var sdk = document.Element("Project")?.Attribute("Sdk")?.Value;
+            return !string.IsNullOrEmpty(sdk);
+        }
+
         private bool CanExcludeFile(string fileName, IList<string> filesToExclude) {
             bool exclude = false;
 
             if (FilesExclude != null) {
                 foreach (var item in FilesExclude) {
-                    if (item != null && 
+                    if (item != null &&
                         !string.IsNullOrEmpty(item.ItemSpec) &&
                         string.Equals(fileName, item.ItemSpec.ToLower(), StringComparison.Ordinal)) {
                         exclude = true;
