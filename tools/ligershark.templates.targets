@@ -500,7 +500,7 @@ ls-DiscoverProjectTemplatesFromTemplateReferences
     
     <ItemGroup>
       <_ls-DestVsTemplateItem Include="$(_ls-DestVsTemplateFullPath)"/>
-      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml;"/>
+      <ls-ProjectTemplateFilesToRemoveOnCopy Include="_preprocess.xml;_Definitions\_project.vstemplate.xml;Microsoft.ApplicationInsights.AspNetCore;Microsoft.AspNetCore;"/>
       <!-- %2A is the escaped value for the * character. See https://msdn.microsoft.com/en-us/library/bb383819.aspx -->
       <ls-ProjectTemplateFilesToRemoveOnCopyRegex Include="sw-.%2A;"/>
     </ItemGroup>
