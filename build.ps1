@@ -5,7 +5,7 @@ param(
     [string]$configuration = 'Release',
 
     [Parameter(ParameterSetName='build')]
-    [string]$visualStudioVersion='14.0',
+    [string]$visualStudioVersion='12.0',
 
     [Parameter(ParameterSetName='build')]
     [switch]$cleanBeforeBuild,
@@ -146,12 +146,15 @@ function PublishNuGetPackage{
         [string[]]$nugetPackage,
 
         [Parameter(Mandatory=$true)]
-        $nugetApiKey
+        $nugetApiKey,
+
+        [Parameter()]
+        $source = 'https://www.nuget.org/api/v2/package'
     )
     process{
         foreach($pkg in $nugetPackage){
             $pkgPath = (get-item $pkg).FullName
-            $cmdArgs = @('push',$pkgPath,$nugetApiKey,'-NonInteractive')
+            $cmdArgs = @('push',$pkgPath,$nugetApiKey,'-source',$source,'-NonInteractive')
 
             'Publishing nuget package [{0}]' -f $pkgPath | Write-Message
 
