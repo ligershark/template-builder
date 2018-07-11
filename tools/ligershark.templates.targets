@@ -969,3 +969,4 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(MSBuildFrameworkToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(windir)\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
   </PropertyGroup>
+</Project>
