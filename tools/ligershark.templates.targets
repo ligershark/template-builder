@@ -65,8 +65,6 @@
     <ls-enable-remove-proj-extensions Condition=" '$(ls-enable-remove-proj-extensions)'=='' ">true</ls-enable-remove-proj-extensions>
 
     <RoboCopyExePath Condition=" '$(RoboCopyExePath)'=='' and Exists('$([System.Environment]::SystemDirectory)\robocopy.exe')">$([System.Environment]::SystemDirectory)\robocopy.exe</RoboCopyExePath>
-    <RoboCopyExePath Condition=" '$(RoboCopyExePath)'=='' ">$(localappdata)\LigerShark\tools\robocopy.exe</RoboCopyExePath>
-    <RoboCopyExeDownloadUrl Condition=" '$(RoboCopyExeDownloadUrl)'=='' ">https://dl.dropboxusercontent.com/u/40134810/SideWaffle/tools/robocopy.exe</RoboCopyExeDownloadUrl>
     <RobocopyLoggingOptions Condition=" '$(RobocopyLoggingOptions)'=='' ">/NFL /NDL /NJS /NJH /NP</RobocopyLoggingOptions>
   </PropertyGroup>
 
@@ -436,12 +434,6 @@ ls-DiscoverProjectTemplatesFromTemplateReferences
     <Message Text="Creating a zip file for each template" Importance="high"/>
   </Target>
 
-  <PropertyGroup>
-    <ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
-      $(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn);
-      GetRobocopy;
-    </ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn>
-  </PropertyGroup>
   <ItemGroup>
     <!-- 
     Defines the list of extensions that will be always be
@@ -457,6 +449,8 @@ ls-DiscoverProjectTemplatesFromTemplateReferences
           Outputs="%(ls-VsNewProjTemplateFiles.Identity)"
           DependsOnTargets="$(ls-CopyNewProjectTemplateFilesToIntermediateFolderDependsOn)"
           Condition=" '@(ls-VsNewProjTemplateFiles)'!= ''">
+    <Error Text="robocopy.exe does not exist at $(RoboCopyExePath)" Condition="!Exists('$(RoboCopyExePath)')" />
+
     <!-- we need to figure out the name of the project that is contained in the _project.vstemplate.xml file -->
     <PropertyGroup>
       <_ls-vsTemplateProjFileXPath>dft:VSTemplate/dft:TemplateContent/dft:Project[1]/@File</_ls-vsTemplateProjFileXPath>
@@ -939,17 +933,6 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     </ItemGroup>
   </Target>
   
-  <Target Name="GetRobocopy" Condition="!Exists('$(RoboCopyExePath)')">
-    <Message Text="Downloading robocopy.exe from [$(RoboCopyExeDownloadUrl)] to [$(RoboCopyExePath)]" />
-    <ItemGroup>
-      <_robocopyexeitem Include="$(RoboCopyExePath)" />
-    </ItemGroup>
-    <MakeDir Directories="@(_robocopyexeitem->'%(RootDir)%(Directory)')"/>
-    <DownloadFile
-        Address="$(RoboCopyExeDownloadUrl)"
-        FileName="$(RoboCopyExePath)" />
-  </Target>
-  
   <!--
     Note: the following targets should only be called when the build is being driven by a standalone build.proj
     and not a VSIX project or a Visual Studio package project
@@ -986,20 +969,3 @@ _ls-DestVsTemplateFullPath: [$(_ls-DestVsTemplateFullPath)]" Importance="low"/>
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(MSBuildFrameworkToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(windir)\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
   </PropertyGroup>
-
-  <UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
-    <!-- http://stackoverflow.com/a/12739168/105999 -->
-    <ParameterGroup>
-      <Address ParameterType="System.String" Required="true"/>
-      <FileName ParameterType="System.String" Required="true" />
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            new System.Net.WebClient().DownloadFile(Address, FileName);
-        ]]>
-      </Code>
-    </Task>
-  </UsingTask>
-</Project>
