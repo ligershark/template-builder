@@ -33,7 +33,7 @@ environment:
     secure: HFUEQanhaxHV/sRQYznQqg7LToxSGeIoSvrmyY29PJ1eDbXxUuYrEQ6MPAsZIQFT
 
 artifacts:
-  - path: 'OutputRoot\**\*.nupkg'
+  - path: 'OutputRoot\*.nupkg'
   - path: 'OutputRoot\**\TemplateBuilder*.dll'
   - path: 'OutputRoot\**\TemplateBuilder*.pdb'
   - path: 'OutputRoot\**\TemplateBuilder*.config'
