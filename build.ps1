@@ -255,6 +255,14 @@ else{
         Build
 
         $outputroot = (get-item (join-path ($buildproj.Directory.FullName) 'OutputRoot\')).FullName
+
+        if($env:APPVEYOR -eq $true){
+            $pkgs = (Get-ChildItem $outputroot *.nupkg)
+            foreach($pkg in $pkgs){
+                Push-AppveyorArtifact ($pkg.FullName) -FileName ($pkg.Name)
+            }
+        }
+
         $nupkgToPublish = @()
         if($publishTemplateBuilderToNuget){
             $package = (Get-ChildItem $outputroot 'TemplateBuilder.*.nupkg')
